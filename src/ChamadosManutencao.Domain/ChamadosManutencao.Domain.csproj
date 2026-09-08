@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Domain nao referencia nenhum projeto nem pacote de infraestrutura (Fase 2). -->
+
+</Project>
