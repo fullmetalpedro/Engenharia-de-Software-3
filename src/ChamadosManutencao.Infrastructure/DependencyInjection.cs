@@ -2,6 +2,7 @@ using ChamadosManutencao.Application.Abstractions;
 using ChamadosManutencao.Domain.Common;
 using ChamadosManutencao.Infrastructure.Armazenamento;
 using ChamadosManutencao.Infrastructure.Auditoria;
+using ChamadosManutencao.Infrastructure.Jobs;
 using ChamadosManutencao.Infrastructure.Notificacao;
 using ChamadosManutencao.Infrastructure.Pagamentos;
 using ChamadosManutencao.Infrastructure.Persistence;
@@ -42,6 +43,7 @@ public static class DependencyInjection
                 .AddInterceptors(provedor.GetRequiredService<InterceptorDeAuditoria>());
         });
 
+        servicos.AddScoped<IContextoDeLeitura, ContextoDeLeitura>();
         servicos.AddScoped<IUnitOfWork, UnidadeDeTrabalho>();
         servicos.AddScoped<IGeradorDeSequencias, GeradorDeSequencias>();
 
@@ -58,6 +60,16 @@ public static class DependencyInjection
         servicos.AddScoped<IDespachanteDeEventos, DespachanteDeEventos>();
         servicos.AddScoped<IGatewayPagamento, GatewayPagamentoSimulado>();
         servicos.AddSingleton<IArmazenamentoArquivos, ArmazenamentoEmVolume>();
+
+        // Os jobs ficam desligados nos testes de integracao, que controlam o tempo por conta
+        // propria; em qualquer outro ambiente o padrao e ligado.
+        if (configuracao.GetSection("Jobs:Habilitados").Value?.ToLowerInvariant() != "false")
+        {
+            servicos.AddHostedService<ExpiracaoOrcamentoJob>();
+            servicos.AddHostedService<VencimentoFaturaJob>();
+            servicos.AddHostedService<EncerramentoJanelaAvaliacaoJob>();
+            servicos.AddHostedService<EncerramentoGarantiaJob>();
+        }
 
         return servicos;
     }
