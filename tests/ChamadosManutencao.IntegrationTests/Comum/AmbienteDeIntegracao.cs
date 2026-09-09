@@ -108,10 +108,6 @@ public sealed class AmbienteDeIntegracao : WebApplicationFactory<Program>, IAsyn
     public Task<int> ExecutarJobDeExpiracaoDeOrcamentoAsync() =>
         ExecutarJobAsync<ExpiracaoOrcamentoJob>();
 
-    /// <summary>RF0083: marca como VENCIDA a fatura emitida que passou do vencimento.</summary>
-    public Task<int> ExecutarJobDeVencimentoDeFaturaAsync() =>
-        ExecutarJobAsync<VencimentoFaturaJob>();
-
     /// <summary>Executa um bloco com o AppDbContext, para montar cenario ou conferir efeito.</summary>
     public async Task ComContextoAsync(Func<AppDbContext, Task> acao)
     {

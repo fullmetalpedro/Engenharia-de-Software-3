@@ -150,6 +150,30 @@ A direção das dependências entre projetos continua apontando para dentro.
 
 ---
 
+## Decisões posteriores à análise
+
+### D26 — Só o job que a RN0043 obriga permanece
+A seção 8 da [`ARQUITETURA.md`](ARQUITETURA.md) previu quatro `BackgroundService`. Revendo a
+origem de cada um contra o DRS, apenas um nasce de requisito:
+
+| Job | Origem | Situação |
+|---|---|---|
+| `ExpiracaoOrcamentoJob` | **RN0043**: *"caso o prazo expire sem manifestação, o chamado deve ser automaticamente cancelado"* | mantido |
+| `VencimentoFaturaJob` | nenhuma. `StatusFatura.VENCIDA` vem do enum do diagrama de classes e RF0083 só usa status como filtro de consulta | removido |
+| `EncerramentoJanelaAvaliacaoJob` | RN0052 é verificada no momento do pedido; o job só contava e registrava | removido |
+| `EncerramentoGarantiaJob` | RN0072 é verificada no acionamento; o job só contava e registrava | removido |
+
+**Decisão:** remover os três. A palavra "automaticamente" da RN0043 é o que exige uma rotina
+rodando sozinha; os demais prazos (RN0035, RN0052, RN0072) são checados na hora da operação e
+recusam o pedido fora do prazo, comportamento coberto por teste. Manter processo de fundo sem
+requisito é código que precisa de manutenção e não responde a ninguém.
+
+**Consequência assumida:** `Fatura.RegistrarVencimento` e o evento `FaturaVencida` continuam no
+domínio, mas hoje só o seed os aciona — nenhuma fatura passa a `Vencida` sozinha em produção.
+Se o vencimento automático virar requisito, o job volta em uma classe.
+
+---
+
 ## Registro de ambiente
 
 - .NET SDK 10.0.400 e `dotnet-ef` 10.0.12 instalados durante a Fase 1.

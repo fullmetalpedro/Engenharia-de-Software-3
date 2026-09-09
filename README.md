@@ -99,8 +99,8 @@ opcional no dia a dia — fora de `Development` ele é obrigatório.
 | `http://localhost:5080/scalar/` | documentação OpenAPI navegável, agrupada por caso de uso |
 | `http://localhost:5080/openapi/v1.json` | o documento OpenAPI cru (68 operações) |
 
-Os quatro jobs de segundo plano sobem junto e **executam uma vez no startup**, repetindo a cada
-15 minutos. Para desligá-los: `export Jobs__Habilitados=false`.
+O job de segundo plano sobe junto e **executa uma vez no startup**, repetindo a cada 15
+minutos. Para desligá-lo: `export Jobs__Habilitados=false`.
 
 ## Popular a base com dados de exemplo
 
@@ -537,14 +537,20 @@ curl -s -X PATCH $BASE/tecnicos/$TECNICO/inativacao   -H "$ADMIN"
 
 ## O que acontece sozinho
 
-Quatro rotinas rodam a cada 15 minutos, e uma vez ao subir a aplicação:
+Uma única rotina de segundo plano, a cada 15 minutos e uma vez ao subir a aplicação:
 
-| Rotina | O que faz |
-|---|---|
-| Expiração de orçamento | passou de 48 h sem decisão: expira o orçamento e cancela o chamado |
-| Vencimento de fatura | fatura emitida que passou do vencimento vira `Vencida` e notifica o cliente |
-| Encerramento da janela de avaliação | registra quantas janelas de 15 dias fecharam sem nota |
-| Encerramento de garantia | registra quantas garantias de 90 dias venceram no intervalo |
+| Rotina | Requisito | O que faz |
+|---|---|---|
+| Expiração de orçamento | RN0043 | passou de 48 h sem decisão: expira o orçamento e cancela o chamado |
+
+É o único prazo que o DRS manda o sistema cumprir sozinho — *"caso o prazo expire sem
+manifestação, o chamado deve ser automaticamente cancelado"*. Os outros três prazos são
+verificados na hora do pedido, não por rotina: a reabertura de 7 dias (RN0035), a janela de
+avaliação de 15 dias (RN0052) e a garantia de 90 dias (RN0072) recusam a operação quando o
+prazo já passou.
+
+O status `Vencida` da fatura existe no modelo e é filtrável na consulta (RF0083), mas nada no
+DRS pede que o sistema faça essa transição sozinho: hoje só o seed a produz.
 
 Além disso, **toda mudança de status notifica o cliente** e **toda escrita é auditada**. Senha e
 token de cartão aparecem no log como `"***"` — nunca em claro.

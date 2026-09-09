@@ -255,25 +255,27 @@ curl -s -D- -o /dev/null -H "$ADMIN" $BASE/chamados | grep -i X-Tempo-De-Respost
 
 ---
 
-## Jobs de segundo plano
+## Job de segundo plano
 
-Os quatro jobs executam uma vez no startup e depois a cada 15 minutos. Para vê-los agindo, deixe
-um orçamento e uma fatura vencidos e reinicie a API:
+O job executa uma vez no startup e depois a cada 15 minutos. Para vê-lo agindo, deixe um
+orçamento vencido e reinicie a API:
 
 ```sql
-UPDATE fatura   SET status = 1, data_vencimento  = now() - interval '3 days' WHERE id = '...';
 UPDATE orcamento SET status = 1, prazo_aprovacao = now() - interval '5 hours' WHERE id = '...';
 ```
 
 | # | Cenário | Requisito | Esperado | Resultado |
 |---|---|---|---|---|
 | 92 | `ExpiracaoOrcamentoJob` | RN0043 | orçamento expira e o chamado é cancelado | ✅ `1 registro(s) processado(s)`; orçamento → `Expirado` |
-| 93 | `VencimentoFaturaJob` | RF0083 | fatura emitida vencida vira VENCIDA | ✅ `1 registro(s) processado(s)`; nenhuma fatura ficou em `Emitida` |
 
 ```
 [21:34:49 INF] ExpiracaoOrcamentoJob: 1 registro(s) processado(s).
-[21:34:49 INF] VencimentoFaturaJob: 1 registro(s) processado(s).
 ```
+
+> A sessão registrada aqui também exercitou o `VencimentoFaturaJob`, que existia na época e
+> passou (`1 registro(s) processado(s)`). Ele foi removido depois, junto com os jobs de
+> encerramento de janela de avaliação e de garantia, por não terem requisito que os pedisse
+> (decisão D26).
 
 ---
 

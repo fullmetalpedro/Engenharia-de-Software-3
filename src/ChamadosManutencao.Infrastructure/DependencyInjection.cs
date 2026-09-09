@@ -61,14 +61,11 @@ public static class DependencyInjection
         servicos.AddScoped<IGatewayPagamento, GatewayPagamentoSimulado>();
         servicos.AddSingleton<IArmazenamentoArquivos, ArmazenamentoEmVolume>();
 
-        // Os jobs ficam desligados nos testes de integracao, que controlam o tempo por conta
+        // O job fica desligado nos testes de integracao, que controlam o tempo por conta
         // propria; em qualquer outro ambiente o padrao e ligado.
         if (configuracao.GetSection("Jobs:Habilitados").Value?.ToLowerInvariant() != "false")
         {
             servicos.AddHostedService<ExpiracaoOrcamentoJob>();
-            servicos.AddHostedService<VencimentoFaturaJob>();
-            servicos.AddHostedService<EncerramentoJanelaAvaliacaoJob>();
-            servicos.AddHostedService<EncerramentoGarantiaJob>();
         }
 
         return servicos;

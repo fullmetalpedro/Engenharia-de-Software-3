@@ -148,31 +148,6 @@ public class UC11FaturasTests : TesteDeIntegracao
         resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
     }
 
-    /// <summary>RF0083: o job marca como VENCIDA a fatura que passou do vencimento.</summary>
-    [Fact]
-    public async Task Fatura_vencida_muda_de_status_ao_rodar_o_job()
-    {
-        var cenario = await MontarCenarioBasicoAsync();
-        var (_, _, conclusao) = await ConcluirAtendimentoAsync(cenario);
-
-        await Ambiente.ComContextoAsync(async contexto =>
-        {
-            var fatura = await contexto.Faturas.SingleAsync(f => f.Id == conclusao.FaturaId);
-
-            contexto.Entry(fatura).Property(nameof(Fatura.DataVencimento)).CurrentValue =
-                DateTimeOffset.UtcNow.AddDays(-1);
-
-            await contexto.SaveChangesAsync();
-        });
-
-        (await Ambiente.ExecutarJobDeVencimentoDeFaturaAsync()).ShouldBe(1);
-
-        var fatura = await (await Admin.GetAsync($"/api/v1/faturas/{conclusao.FaturaId}"))
-            .LerAsync<FaturaDto>();
-
-        fatura.Status.ShouldBe(StatusFatura.Vencida);
-    }
-
     /// <summary>RN0071: chamado de garantia nao gera fatura.</summary>
     [Fact]
     public async Task Chamado_de_garantia_nao_gera_fatura()
