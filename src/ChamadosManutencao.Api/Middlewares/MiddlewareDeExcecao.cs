@@ -56,7 +56,9 @@ public sealed class MiddlewareDeExcecao
             Status = status,
             Detail = status >= StatusCodes.Status500InternalServerError
                 ? "Ocorreu um erro inesperado ao processar a requisicao."
-                : excecao.Message,
+                : excecao is System.Text.Json.JsonException
+                    ? "O corpo da requisicao nao pode ser lido. Confira o formato dos campos."
+                    : excecao.Message,
             Instance = contexto.Request.Path
         };
 
@@ -73,6 +75,10 @@ public sealed class MiddlewareDeExcecao
                         grupo => grupo.Key,
                         grupo => grupo.Select(erro => erro.ErrorMessage).ToArray());
                 problema.Detail = "Um ou mais campos estao invalidos.";
+                break;
+
+            case System.Text.Json.JsonException json when json.Path is not null:
+                problema.Extensions["campo"] = json.Path;
                 break;
 
             case ExcecaoDeDominio dominio when dominio.Requisito is not null:
@@ -98,6 +104,13 @@ public sealed class MiddlewareDeExcecao
         BadHttpRequestException requisicao => (
             requisicao.StatusCode,
             "Requisicao malformada",
+            "https://tools.ietf.org/html/rfc9110#section-15.5.1"),
+
+        // Corpo JSON que o System.Text.Json nao consegue desserializar: GUID, data ou enum
+        // fora do formato. Sem este caso o erro sairia como 500.
+        System.Text.Json.JsonException => (
+            StatusCodes.Status400BadRequest,
+            "Corpo da requisicao invalido",
             "https://tools.ietf.org/html/rfc9110#section-15.5.1"),
 
         ValidacaoException or FluentValidation.ValidationException => (

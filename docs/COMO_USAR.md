@@ -3,10 +3,17 @@
 Este documento é sobre **operar** o sistema, não sobre compilá-lo. Para subir o ambiente,
 veja [`COMO_RODAR.md`](COMO_RODAR.md).
 
-O sistema não tem tela. A interface é a API HTTP em `/api/v1`, e a forma mais confortável de
-usá-la é o Scalar em `http://localhost:5080/scalar/`: os 68 endpoints agrupados por caso de
-uso, com o corpo de cada requisição documentado e um botão para disparar a chamada ali mesmo.
-Os exemplos aqui usam `curl` porque cabem no texto — no Scalar é o mesmo, sem digitar.
+O sistema não tem tela. A interface é a API HTTP em `/api/v1`, e há duas formas confortáveis de
+usá-la:
+
+- **[Collection do Postman](../postman/README.md)** — os 68 endpoints por caso de uso, já com
+  corpo preenchido, token do papel certo em cada requisição e os identificadores passando de uma
+  chamada para a outra. É o painel de controle do sistema; comece por aqui.
+- **Scalar**, em `http://localhost:5080/scalar/` — a documentação OpenAPI navegável, com um
+  cliente HTTP embutido.
+
+Os exemplos deste guia usam `curl` porque cabem no texto. No Postman e no Scalar é o mesmo, sem
+digitar.
 
 ---
 

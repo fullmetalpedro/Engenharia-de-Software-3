@@ -10,6 +10,7 @@ prova. O mapa completo está em [`docs/RASTREABILIDADE.md`](docs/RASTREABILIDADE
 | Documento | Conteúdo |
 |---|---|
 | [`docs/COMO_USAR.md`](docs/COMO_USAR.md) | Guia de operação: o que cada papel faz, na ordem em que faria no dia a dia |
+| [`postman/README.md`](postman/README.md) | Collection do Postman: a interface para operar o sistema enquanto não há tela |
 | [`docs/COMO_RODAR.md`](docs/COMO_RODAR.md) | Passo a passo para subir o projeto e rodar as três camadas de teste |
 | [`docs/TESTES_MANUAIS.md`](docs/TESTES_MANUAIS.md) | Roteiro manual: 93 cenários com o comando, o resultado esperado e o observado |
 | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Desenho da solução, agregados, transversais e as dúvidas levantadas na análise |

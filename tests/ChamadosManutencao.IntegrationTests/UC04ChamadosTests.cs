@@ -37,6 +37,33 @@ public class UC04ChamadosTests : TesteDeIntegracao
         segundo.Numero.ShouldBe(primeiro.Numero + 1);
     }
 
+    /// <summary>
+    /// Corpo JSON com GUID fora do formato e requisicao malformada, nao erro interno. Achado
+    /// ao montar a collection do Postman: sem o tratamento a resposta saia como 500.
+    /// </summary>
+    [Fact]
+    public async Task Corpo_json_malformado_devolve_400_e_nao_500()
+    {
+        var cenario = await MontarCenarioBasicoAsync();
+
+        var corpo = new StringContent(
+            """
+            {
+              "imovelId": "nao-e-um-guid",
+              "categoriaServicoId": "tambem-nao",
+              "tipoServicoId": "nem-este",
+              "descricaoProblema": "Corpo invalido de proposito.",
+              "indicacaoDeRisco": false
+            }
+            """,
+            System.Text.Encoding.UTF8,
+            "application/json");
+
+        var resposta = await cenario.Cliente.Http.PostAsync("/api/v1/chamados", corpo);
+
+        await resposta.DeveTerStatusAsync(HttpStatusCode.BadRequest);
+    }
+
     /// <summary>RN0031: categoria de risco com indicacao de risco vira urgencia ALTA.</summary>
     [Fact]
     public async Task Indicacao_de_risco_em_categoria_de_risco_forca_urgencia_alta()
