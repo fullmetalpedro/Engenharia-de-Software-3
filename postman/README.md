@@ -14,7 +14,7 @@ identificadores passando de uma chamada para a outra.
 
 ## Começar
 
-1. Suba o ambiente e popule a base — passo a passo em [`../docs/COMO_RODAR.md`](../docs/COMO_RODAR.md):
+1. Suba o ambiente e popule a base — passo a passo em [`../README.md`](../README.md):
 
    ```bash
    docker compose up -d postgres

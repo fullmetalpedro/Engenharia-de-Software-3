@@ -925,7 +925,7 @@ DESCRICAO = (
     + NL + NL
     + "**Upload**: nas requisicoes multipart, selecione um arquivo no campo antes de enviar."
     + NL + NL
-    + "Guia de operacao completo em `docs/COMO_USAR.md`."
+    + "Guia de operacao completo no README do repositorio."
 )
 
 PRE_JORNADA = (
