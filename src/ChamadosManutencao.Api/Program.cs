@@ -17,6 +17,28 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Ajustes da maquina do desenvolvedor (por exemplo, outra porta do PostgreSQL quando a 5432
+// ja esta ocupada). O arquivo nao e versionado; ver .gitignore e o README.
+//
+// A fonte entra logo depois dos appsettings e antes das variaveis de ambiente, para que o
+// ambiente continue tendo a ultima palavra (e o compose e o CI sobreponham o arquivo local).
+var ultimoJson = builder.Configuration.Sources
+    .Select((fonte, indice) => (fonte, indice))
+    .Where(par => par.fonte is Microsoft.Extensions.Configuration.Json.JsonConfigurationSource)
+    .Select(par => par.indice)
+    .DefaultIfEmpty(-1)
+    .Max();
+
+builder.Configuration.Sources.Insert(
+    ultimoJson + 1,
+    new Microsoft.Extensions.Configuration.Json.JsonConfigurationSource
+    {
+        Path = "appsettings.Local.json",
+        Optional = true,
+        ReloadOnChange = true,
+        FileProvider = builder.Environment.ContentRootFileProvider
+    });
+
 builder.Host.UseSerilog((contexto, configuracao) =>
     configuracao.ReadFrom.Configuration(contexto.Configuration));
 

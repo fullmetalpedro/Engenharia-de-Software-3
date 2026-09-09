@@ -42,6 +42,29 @@ dotnet run --project src/ChamadosManutencao.Api
 A API sobe em `http://localhost:5080`. A documentação fica em `http://localhost:5080/scalar`,
 com os endpoints agrupados por caso de uso, e o health check em `http://localhost:5080/health`.
 
+### Se a porta 5432 já estiver ocupada
+
+Quando a máquina já tem um PostgreSQL nativo na 5432, troque a porta publicada no `.env`
+(`POSTGRES_PORT=55432`, por exemplo) e aponte a aplicação para ela criando
+`src/ChamadosManutencao.Api/appsettings.Local.json` — arquivo não versionado, lido logo depois
+dos `appsettings` e antes das variáveis de ambiente:
+
+```json
+{
+  "ConnectionStrings": {
+    "Postgres": "Host=localhost;Port=55432;Database=chamados;Username=chamados;Password=chamados_dev_senha"
+  }
+}
+```
+
+O `dotnet ef` não lê esse arquivo: passe a cadeia de conexão pelo ambiente na hora de aplicar as
+migrations.
+
+```bash
+ConnectionStrings__Postgres="Host=localhost;Port=55432;Database=chamados;Username=chamados;Password=chamados_dev_senha" \
+  dotnet ef database update -p src/ChamadosManutencao.Infrastructure -s src/ChamadosManutencao.Api
+```
+
 Em `Development` as migrations pendentes são aplicadas no startup; em qualquer outro ambiente
 isso nunca acontece — o `dotnet ef database update` é obrigatório.
 
