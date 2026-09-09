@@ -98,6 +98,11 @@ public sealed class MiddlewareDeExcecao
             "Falha de validacao",
             "https://tools.ietf.org/html/rfc9110#section-15.5.1"),
 
+        CredenciaisInvalidasException => (
+            StatusCodes.Status401Unauthorized,
+            "Nao autenticado",
+            "https://tools.ietf.org/html/rfc9110#section-15.5.2"),
+
         AcessoNegadoException => (
             StatusCodes.Status403Forbidden,
             "Acesso negado",

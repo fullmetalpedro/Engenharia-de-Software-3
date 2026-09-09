@@ -91,9 +91,15 @@ var app = builder.Build();
 
 // ---------- Comandos de linha ----------
 // dotnet run --project src/ChamadosManutencao.Api -- seed | criar-admin
-if (args.Length > 0)
+//
+// Nada de await no corpo do Program: WebApplicationFactory (usada pelos testes de
+// integracao) nao consegue capturar o host quando o ponto de entrada e assincrono.
+//
+// A comparacao e por nome de comando conhecido, nao por args.Length: o host de teste passa
+// os proprios argumentos de linha de comando e derrubaria a API antes do app.Run().
+if (args.Length > 0 && ComandosDeLinha.EhComandoConhecido(args[0]))
 {
-    await ComandosDeLinha.ExecutarAsync(app, args);
+    ComandosDeLinha.ExecutarAsync(app, args).GetAwaiter().GetResult();
     return;
 }
 
@@ -122,7 +128,7 @@ if (app.Environment.IsDevelopment())
 {
     using var escopo = app.Services.CreateScope();
     var contexto = escopo.ServiceProvider.GetRequiredService<AppDbContext>();
-    await contexto.Database.MigrateAsync();
+    contexto.Database.Migrate();
 }
 
 app.Run();

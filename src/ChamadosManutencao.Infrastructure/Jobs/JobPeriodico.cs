@@ -60,8 +60,11 @@ public abstract class JobPeriodico : BackgroundService
         while (await EsperarAsync(temporizador, stoppingToken));
     }
 
-    /// <summary>Devolve quantos registros a execucao processou.</summary>
-    protected abstract Task<int> ProcessarAsync(
+    /// <summary>
+    /// Devolve quantos registros a execucao processou. E publico para que o teste de
+    /// integracao possa disparar uma execucao sem esperar o intervalo.
+    /// </summary>
+    public abstract Task<int> ProcessarAsync(
         IServiceProvider provedor,
         CancellationToken cancellationToken);
 

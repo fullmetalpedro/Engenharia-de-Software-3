@@ -46,3 +46,14 @@ public sealed class ValidacaoException : Exception
 
     public IDictionary<string, string[]> Erros { get; }
 }
+
+/// <summary>
+/// Credencial invalida ou usuario inativo no login. A API traduz para 401: o pedido nao foi
+/// autenticado, diferente do 403 que pressupoe usuario conhecido sem permissao.
+/// </summary>
+public sealed class CredenciaisInvalidasException : Exception
+{
+    public CredenciaisInvalidasException(string mensagem) : base(mensagem)
+    {
+    }
+}

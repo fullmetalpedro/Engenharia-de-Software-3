@@ -63,7 +63,7 @@ public sealed class LoginHandler
         {
             // Mensagem unica para credencial invalida e usuario inativo: nao revela qual dos
             // dois falhou.
-            throw new AcessoNegadoException("Credenciais invalidas.");
+            throw new CredenciaisInvalidasException("Credenciais invalidas.");
         }
 
         var emitido = _token.Emitir(usuario);

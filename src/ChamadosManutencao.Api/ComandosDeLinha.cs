@@ -20,6 +20,12 @@ internal static class ComandosDeLinha
 {
     private const string SenhaPadrao = "Senha@123";
 
+    private static readonly string[] Comandos = ["seed", "criar-admin"];
+
+    /// <summary>Diz se o primeiro argumento e um comando desta classe, e nao um argumento do host.</summary>
+    public static bool EhComandoConhecido(string argumento) =>
+        Comandos.Contains(argumento.Trim().ToLowerInvariant());
+
     public static async Task ExecutarAsync(WebApplication app, string[] args)
     {
         var comando = args[0].Trim().ToLowerInvariant();
@@ -547,7 +553,6 @@ internal static class ComandosDeLinha
                 geradorId);
 
             contexto.Garantias.Add(garantia);
-            chamado.VincularGarantia(garantia.Id);
 
             chamado.AlterarStatus(
                 StatusChamado.Concluido,

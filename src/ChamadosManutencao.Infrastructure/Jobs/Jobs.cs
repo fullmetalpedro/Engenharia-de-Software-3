@@ -22,7 +22,7 @@ public sealed class ExpiracaoOrcamentoJob : JobPeriodico
 
     protected override string Nome => "ExpiracaoOrcamentoJob";
 
-    protected override async Task<int> ProcessarAsync(
+    public override async Task<int> ProcessarAsync(
         IServiceProvider provedor,
         CancellationToken cancellationToken)
     {
@@ -97,7 +97,7 @@ public sealed class VencimentoFaturaJob : JobPeriodico
 
     protected override string Nome => "VencimentoFaturaJob";
 
-    protected override async Task<int> ProcessarAsync(
+    public override async Task<int> ProcessarAsync(
         IServiceProvider provedor,
         CancellationToken cancellationToken)
     {
@@ -142,7 +142,7 @@ public sealed class EncerramentoJanelaAvaliacaoJob : JobPeriodico
 
     protected override string Nome => "EncerramentoJanelaAvaliacaoJob";
 
-    protected override async Task<int> ProcessarAsync(
+    public override async Task<int> ProcessarAsync(
         IServiceProvider provedor,
         CancellationToken cancellationToken)
     {
@@ -189,7 +189,7 @@ public sealed class EncerramentoGarantiaJob : JobPeriodico
 
     protected override string Nome => "EncerramentoGarantiaJob";
 
-    protected override async Task<int> ProcessarAsync(
+    public override async Task<int> ProcessarAsync(
         IServiceProvider provedor,
         CancellationToken cancellationToken)
     {
