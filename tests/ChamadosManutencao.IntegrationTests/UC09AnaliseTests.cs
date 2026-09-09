@@ -137,6 +137,21 @@ public class UC09AnaliseTests : TesteDeIntegracao
         await resposta.DeveTerStatusAsync(HttpStatusCode.BadRequest);
     }
 
+    /// <summary>
+    /// Data que o ASP.NET nao consegue converter e requisicao malformada, nao erro interno.
+    /// Achado no teste manual: sem o tratamento a resposta saia como 500.
+    /// </summary>
+    [Fact]
+    public async Task Data_malformada_devolve_400_e_nao_500()
+    {
+        var resposta = await Admin.GetAsync(
+            "/api/v1/analises/chamados"
+            + "?dataInicio=abacaxi"
+            + $"&dataFim={Formatar(DateTimeOffset.UtcNow)}");
+
+        await resposta.DeveTerStatusAsync(HttpStatusCode.BadRequest);
+    }
+
     /// <summary>RF0074: exportacao em planilha (CSV).</summary>
     [Fact]
     public async Task Exportacao_devolve_csv_com_o_conteudo_do_grafico()

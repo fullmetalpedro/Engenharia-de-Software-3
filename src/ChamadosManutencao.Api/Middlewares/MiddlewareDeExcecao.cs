@@ -93,6 +93,13 @@ public sealed class MiddlewareDeExcecao
 
     private static (int Status, string Titulo, string Tipo) Classificar(Exception excecao) => excecao switch
     {
+        // Parametro de rota ou de query que o proprio ASP.NET nao conseguiu converter
+        // (data, GUID ou enum malformado). Sem este caso o erro sairia como 500.
+        BadHttpRequestException requisicao => (
+            requisicao.StatusCode,
+            "Requisicao malformada",
+            "https://tools.ietf.org/html/rfc9110#section-15.5.1"),
+
         ValidacaoException or FluentValidation.ValidationException => (
             StatusCodes.Status400BadRequest,
             "Falha de validacao",
