@@ -21,8 +21,6 @@ public interface IUsuarioRepositorio
 
     Task<bool> ExisteEmailAsync(string email, Guid? ignorarId = null, CancellationToken cancellationToken = default);
 
-    Task<bool> ExisteAdministradorAsync(CancellationToken cancellationToken = default);
-
     void Adicionar(Usuario usuario);
 }
 
@@ -96,11 +94,6 @@ public interface IAtendimentoRepositorio
         Guid atendimentoId,
         CancellationToken cancellationToken = default);
 
-    /// <summary>RN0043: orcamentos pendentes com prazo vencido, usados pelo job de expiracao.</summary>
-    Task<IReadOnlyCollection<Orcamento>> ObterOrcamentosVencidosAsync(
-        DateTimeOffset limite,
-        CancellationToken cancellationToken = default);
-
     void Adicionar(Atendimento atendimento);
 
     void AdicionarGarantia(Garantia garantia);
@@ -122,11 +115,6 @@ public interface IFaturaRepositorio
     Task<Fatura?> ObterComPagamentosAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<Fatura?> ObterPorAtendimentoAsync(Guid atendimentoId, CancellationToken cancellationToken = default);
-
-    /// <summary>Faturas emitidas com vencimento no passado, usadas pelo job de vencimento.</summary>
-    Task<IReadOnlyCollection<Fatura>> ObterVencidasAsync(
-        DateTimeOffset limite,
-        CancellationToken cancellationToken = default);
 
     void Adicionar(Fatura fatura);
 }

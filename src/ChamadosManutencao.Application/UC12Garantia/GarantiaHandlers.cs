@@ -10,7 +10,12 @@ using Microsoft.EntityFrameworkCore;
 namespace ChamadosManutencao.Application.UC12Garantia;
 
 /// <summary>Acionamento da garantia (RF0085).</summary>
-public sealed record AcionarGarantiaCommand(string DescricaoProblema);
+/// <summary>
+/// Acionamento da garantia (RF0085). O tipo de servico e opcional: sem ele o chamado de
+/// garantia herda o do atendimento original. Informado e diferente, a RN0072 recusa — o
+/// defeito e de outra natureza e nao esta coberto por esta garantia.
+/// </summary>
+public sealed record AcionarGarantiaCommand(string DescricaoProblema, Guid? TipoServicoId = null);
 
 /// <summary>
 /// Resposta do acionamento. Quando o tecnico original nao serve mais, o chamado nasce sem
@@ -94,11 +99,13 @@ public sealed class AcionarGarantiaHandler
         // quitacao recai sobre a fatura do atendimento original.
         var faturaQuitada = await FaturaEstaQuitadaAsync(atendimento.Id, chamadoOriginal, cancellationToken);
 
+        var tipoServicoSolicitado = comando.TipoServicoId ?? chamadoOriginal.TipoServicoId;
+
         var motivo = garantia.MotivoDeRecusa(
             _relogio.Agora,
             faturaQuitada,
             chamadoOriginal.TipoServicoId,
-            chamadoOriginal.TipoServicoId);
+            tipoServicoSolicitado);
 
         if (motivo is not null)
         {

@@ -21,9 +21,6 @@ public sealed record ArquivoRecebido(
     long TamanhoBytes,
     Stream Conteudo);
 
-/// <summary>Cancelamento pelo cliente (RF0045, RN0033).</summary>
-public sealed record CancelarChamadoCommand(string? Motivo = null);
-
 /// <summary>Cancelamento administrativo (RF0045).</summary>
 public sealed record CancelamentoAdministrativoCommand(string Motivo);
 

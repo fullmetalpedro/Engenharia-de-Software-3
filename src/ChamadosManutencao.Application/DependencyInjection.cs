@@ -14,8 +14,7 @@ public static class DependencyInjection
     {
         var assembly = Assembly.GetExecutingAssembly();
 
-        // Handlers seguem a convencao de nome terminando em "Handler" e sao registrados
-        // com tempo de vida por requisicao, como o DbContext.
+        // Tempo de vida por requisicao, para acompanhar o do DbContext.
         var handlers = assembly.GetTypes()
             .Where(tipo => tipo is { IsClass: true, IsAbstract: false }
                 && tipo.Name.EndsWith("Handler", StringComparison.Ordinal));

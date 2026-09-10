@@ -224,15 +224,22 @@ public sealed class ReagendarAtendimentoHandler
         var ehCliente = usuarioId == chamado.ClienteId;
         var ehTecnico = chamado.EstaAtribuidoAo(usuarioId);
 
-        if (!ehCliente && !ehTecnico && !Autorizacao.EhAdministrador(_usuarioAtual))
+        if (!ehCliente && !ehTecnico)
         {
             throw new AcessoNegadoException(
                 "Somente o cliente dono ou o tecnico atribuido pode reagendar.");
         }
 
+        if (chamado.TecnicoId is null)
+        {
+            throw new ConflitoException(
+                "O chamado precisa de um tecnico atribuido antes do reagendamento.",
+                "RF0053");
+        }
+
         var duracao = comando.DuracaoEmMinutos ?? _duracaoConfigurada;
 
-        var tecnico = await _tecnicos.ObterCompletoAsync(chamado.TecnicoId!.Value, cancellationToken)
+        var tecnico = await _tecnicos.ObterCompletoAsync(chamado.TecnicoId.Value, cancellationToken)
             ?? throw new RecursoNaoEncontradoException("Tecnico", chamado.TecnicoId.Value);
 
         var compromissos = await _tecnicos.ObterCompromissosAsync(
@@ -256,7 +263,6 @@ public sealed class ReagendarAtendimentoHandler
             duracao,
             ehCliente ? OrigemProposta.Cliente : OrigemProposta.Tecnico);
 
-        // AdicionarAgendamento marca a proposta anterior como reagendada.
         chamado.AdicionarAgendamento(novoAgendamento, usuarioId, _relogio.Agora, _geradorId);
 
         await _unidadeDeTrabalho.SalvarAlteracoesAsync(cancellationToken);

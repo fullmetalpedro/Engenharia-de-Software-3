@@ -56,9 +56,11 @@ public sealed class IniciarAtendimentoHandler
 
         var existente = await _atendimentos.ObterPorChamadoAsync(chamadoId, cancellationToken);
 
-        if (existente is not null)
+        // Um chamado reaberto (RN0035) ganha um atendimento por passagem: o que impede novo
+        // inicio e haver um ainda em andamento, nao ter havido algum no passado.
+        if (existente is not null && !existente.EstaConcluido)
         {
-            throw new ConflitoException("Este chamado ja possui atendimento registrado.", "RF0054");
+            throw new ConflitoException("Este chamado ja possui atendimento em andamento.", "RF0054");
         }
 
         var atendimento = new Atendimento(_geradorId.NovoId(), chamadoId, tecnicoId, _relogio.Agora);
@@ -90,7 +92,6 @@ public sealed class IniciarAtendimentoHandler
 public sealed class RegistrarOrcamentoHandler
 {
     private readonly IAtendimentoRepositorio _atendimentos;
-    private readonly IChamadoRepositorio _chamados;
     private readonly IUsuarioAtual _usuarioAtual;
     private readonly IGeradorId _geradorId;
     private readonly IRelogio _relogio;
@@ -98,14 +99,12 @@ public sealed class RegistrarOrcamentoHandler
 
     public RegistrarOrcamentoHandler(
         IAtendimentoRepositorio atendimentos,
-        IChamadoRepositorio chamados,
         IUsuarioAtual usuarioAtual,
         IGeradorId geradorId,
         IRelogio relogio,
         IUnitOfWork unidadeDeTrabalho)
     {
         _atendimentos = atendimentos;
-        _chamados = chamados;
         _usuarioAtual = usuarioAtual;
         _geradorId = geradorId;
         _relogio = relogio;
@@ -183,14 +182,7 @@ public sealed class ConsultarOrcamentoHandler
             .Select(c => c.ClienteId)
             .SingleAsync(cancellationToken);
 
-        var usuarioId = Autorizacao.ExigirAutenticado(_usuarioAtual);
-
-        if (!Autorizacao.EhAdministrador(_usuarioAtual)
-            && usuarioId != clienteId
-            && usuarioId != atendimento.TecnicoId)
-        {
-            throw new AcessoNegadoException("Este atendimento pertence a outro usuario.");
-        }
+        Autorizacao.ExigirEnvolvido(_usuarioAtual, clienteId, atendimento.TecnicoId, "atendimento");
 
         return atendimento.Orcamentos.Select(Mapear).ToList();
     }
@@ -351,7 +343,17 @@ public sealed class ConcluirAtendimentoHandler
         var chamado = await _chamados.ObterCompletoAsync(atendimento.ChamadoId, cancellationToken)
             ?? throw new RecursoNaoEncontradoException("Chamado", atendimento.ChamadoId);
 
-        // RF0057: fotos do servico finalizado, com a cota propria da decisao D09.
+        // RF0057: as fotos do servico dividem com a abertura a cota da RNF0043. A recusa vem
+        // antes de gravar qualquer arquivo, senao um lote grande demais deixaria as primeiras
+        // fotos orfas no volume.
+        if (chamado.Anexos.Count + fotosDaConclusao.Count > Chamado.MaximoDeAnexos)
+        {
+            throw new ConflitoException(
+                $"Limite de {Chamado.MaximoDeAnexos} arquivos por chamado: o chamado ja tem "
+                + $"{chamado.Anexos.Count}.",
+                "RNF0043");
+        }
+
         foreach (var arquivo in fotosDaConclusao)
         {
             var anexoId = _geradorId.NovoId();

@@ -97,19 +97,10 @@ public sealed class CartaoCredito : FormaPagamento
 
     public override string Descricao() => $"{Bandeira} **** {UltimosQuatroDigitos}";
 
-    public override bool Validar() =>
-        !string.IsNullOrWhiteSpace(TokenOperadora) && UltimosQuatroDigitos.Length == 4;
-
-    /// <summary>O cartao esta dentro da validade na data informada.</summary>
-    public bool EstaValido(DateTimeOffset agora)
-    {
-        var partes = Validade.Split('/');
-        var mes = int.Parse(partes[0]);
-        var ano = int.Parse(partes[1]);
-        var ultimoDia = new DateTimeOffset(ano, mes, DateTime.DaysInMonth(ano, mes), 23, 59, 59, TimeSpan.Zero);
-
-        return agora <= ultimoDia;
-    }
+    // O formato da validade ja e conferido no construtor; aqui so resta o token da operadora,
+    // que e o que de fato permite cobrar (RNF0061). Nenhum requisito pede recusa por cartao
+    // vencido, entao a data nao entra nesta verificacao.
+    public override bool Validar() => !string.IsNullOrWhiteSpace(TokenOperadora);
 
     private static string ValidarUltimosQuatro(string valor)
     {

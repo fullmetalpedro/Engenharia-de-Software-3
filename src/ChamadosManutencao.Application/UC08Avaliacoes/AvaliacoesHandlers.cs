@@ -103,18 +103,21 @@ public sealed class RegistrarAvaliacaoHandler
             throw new ConflitoException("Este chamado ja foi avaliado.", "RF0061");
         }
 
+        // Um chamado reaberto e reconcluido tem mais de um atendimento encerrado: a RN0052
+        // conta o prazo a partir do mais recente.
         var conclusao = await _leitura.Atendimentos
             .Where(a => a.ChamadoId == chamadoId && a.DataHoraConclusao != null)
-            .Select(a => a.DataHoraConclusao!.Value)
-            .SingleOrDefaultAsync(cancellationToken);
+            .OrderByDescending(a => a.DataHoraConclusao)
+            .Select(a => (DateTimeOffset?)a.DataHoraConclusao!.Value)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (conclusao == default)
+        if (conclusao is null)
         {
             throw new ConflitoException("Nao ha atendimento concluido para este chamado.", "RN0051");
         }
 
         // RN0052: 15 dias corridos apos a conclusao (decisao D13: a janela e derivada da data).
-        if (!Avaliacao.DentroDoPrazo(conclusao, _relogio.Agora))
+        if (!Avaliacao.DentroDoPrazo(conclusao.Value, _relogio.Agora))
         {
             throw new ConflitoException(
                 $"O prazo de {Avaliacao.PrazoParaAvaliarEmDias} dias corridos para avaliar ja expirou.",

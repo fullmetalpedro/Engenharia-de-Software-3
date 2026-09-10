@@ -37,36 +37,6 @@ public sealed class ArmazenamentoEmVolume : IArmazenamentoArquivos
         return caminhoRelativo.Replace('\\', '/');
     }
 
-    public Task<Stream> AbrirLeituraAsync(
-        string caminhoRelativo,
-        CancellationToken cancellationToken = default)
-    {
-        var origem = CaminhoAbsoluto(caminhoRelativo);
-
-        if (!File.Exists(origem))
-        {
-            throw new FileNotFoundException("Arquivo nao encontrado no armazenamento.", caminhoRelativo);
-        }
-
-        Stream fluxo = File.OpenRead(origem);
-
-        return Task.FromResult(fluxo);
-    }
-
-    public Task RemoverAsync(string caminhoRelativo, CancellationToken cancellationToken = default)
-    {
-        var alvo = CaminhoAbsoluto(caminhoRelativo);
-
-        if (File.Exists(alvo))
-        {
-            File.Delete(alvo);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    public bool Existe(string caminhoRelativo) => File.Exists(CaminhoAbsoluto(caminhoRelativo));
-
     /// <summary>
     /// Resolve o caminho dentro da raiz e recusa qualquer tentativa de sair dela
     /// (path traversal com ".." no nome do arquivo).
@@ -74,9 +44,14 @@ public sealed class ArmazenamentoEmVolume : IArmazenamentoArquivos
     private string CaminhoAbsoluto(string caminhoRelativo)
     {
         var combinado = Path.GetFullPath(Path.Combine(_raiz, caminhoRelativo));
-        var raizNormalizada = Path.GetFullPath(_raiz);
 
-        if (!combinado.StartsWith(raizNormalizada, StringComparison.Ordinal))
+        // O separador no fim evita que uma pasta irma com o mesmo prefixo (storage-backup)
+        // passe pela verificacao. A comparacao acompanha o sistema de arquivos, que no
+        // Windows ignora caixa.
+        var raizNormalizada = Path.GetFullPath(_raiz).TrimEnd(Path.DirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+
+        if (!combinado.StartsWith(raizNormalizada, StringComparison.OrdinalIgnoreCase))
         {
             throw new UnauthorizedAccessException(
                 "Caminho de arquivo fora da raiz de armazenamento.");

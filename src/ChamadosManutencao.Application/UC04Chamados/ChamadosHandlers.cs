@@ -17,7 +17,6 @@ public sealed class AbrirChamadoHandler
     private readonly IChamadoRepositorio _chamados;
     private readonly IClienteRepositorio _clientes;
     private readonly ICatalogoRepositorio _catalogo;
-    private readonly IContextoDeLeitura _leitura;
     private readonly IGeradorDeSequencias _sequencias;
     private readonly IArmazenamentoArquivos _armazenamento;
     private readonly IUsuarioAtual _usuarioAtual;
@@ -29,7 +28,6 @@ public sealed class AbrirChamadoHandler
         IChamadoRepositorio chamados,
         IClienteRepositorio clientes,
         ICatalogoRepositorio catalogo,
-        IContextoDeLeitura leitura,
         IGeradorDeSequencias sequencias,
         IArmazenamentoArquivos armazenamento,
         IUsuarioAtual usuarioAtual,
@@ -40,7 +38,6 @@ public sealed class AbrirChamadoHandler
         _chamados = chamados;
         _clientes = clientes;
         _catalogo = catalogo;
-        _leitura = leitura;
         _sequencias = sequencias;
         _armazenamento = armazenamento;
         _usuarioAtual = usuarioAtual;
@@ -139,9 +136,9 @@ public sealed class AbrirChamadoHandler
                 caminho,
                 OrigemAnexo.ChamadoAbertura);
 
-            await _armazenamento.GravarAsync(caminho, arquivo.Conteudo, cancellationToken);
-
             chamado.AdicionarAnexo(anexo);
+
+            await _armazenamento.GravarAsync(caminho, arquivo.Conteudo, cancellationToken);
         }
 
         _chamados.Adicionar(chamado);
@@ -312,20 +309,22 @@ public sealed class ReabrirChamadoHandler
 
         Autorizacao.ExigirDono(_usuarioAtual, chamado.ClienteId);
 
-        // RN0035 conta os 7 dias a partir da conclusao do atendimento.
+        // RN0035 conta os 7 dias a partir da conclusao. Um chamado reaberto e reconcluido tem
+        // mais de um atendimento encerrado, entao vale o mais recente.
         var conclusao = await _leitura.Atendimentos
             .Where(a => a.ChamadoId == chamadoId && a.DataHoraConclusao != null)
-            .Select(a => a.DataHoraConclusao!.Value)
-            .SingleOrDefaultAsync(cancellationToken);
+            .OrderByDescending(a => a.DataHoraConclusao)
+            .Select(a => (DateTimeOffset?)a.DataHoraConclusao!.Value)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (conclusao == default)
+        if (conclusao is null)
         {
             throw new ConflitoException(
                 "Nao ha atendimento concluido para este chamado.",
                 "RN0035");
         }
 
-        chamado.SolicitarReabertura(chamado.ClienteId, conclusao, _relogio.Agora, _geradorId);
+        chamado.SolicitarReabertura(chamado.ClienteId, conclusao.Value, _relogio.Agora, _geradorId);
 
         await _unidadeDeTrabalho.SalvarAlteracoesAsync(cancellationToken);
     }

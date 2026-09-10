@@ -51,6 +51,17 @@ if (string.IsNullOrWhiteSpace(opcoesDeJwt.ChaveSecreta) || opcoesDeJwt.ChaveSecr
         "Jwt:ChaveSecreta deve ser configurada com ao menos 32 caracteres.");
 }
 
+// A chave do appsettings esta no repositorio: quem a alcanca emite token de administrador.
+// Ela serve para levantar o ambiente local e nada alem disso.
+const string ChaveDeDesenvolvimento = "chave-de-desenvolvimento-com-pelo-menos-32-bytes-troque-isto";
+
+if (!builder.Environment.IsDevelopment() && opcoesDeJwt.ChaveSecreta == ChaveDeDesenvolvimento)
+{
+    throw new InvalidOperationException(
+        "Jwt:ChaveSecreta ainda e a chave de desenvolvimento versionada. Defina uma propria "
+        + $"pelo ambiente antes de subir em {builder.Environment.EnvironmentName}.");
+}
+
 builder.Services.AddSingleton(opcoesDeJwt);
 
 // ---------- Camadas ----------
@@ -135,12 +146,18 @@ app.UseSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapOpenApi();
-app.UseSwaggerUI(opcoes =>
+// A documentacao e a interface do sistema enquanto nao ha tela, mas ela desenha o mapa
+// completo das rotas e dos schemas para quem chega sem token: fora de producao apenas.
+if (!app.Environment.IsProduction())
 {
-    opcoes.SwaggerEndpoint("/openapi/v1.json", "Chamados de Manutencao v1");
-    opcoes.DocumentTitle = "Chamados de Manutencao";
-});
+    app.MapOpenApi();
+
+    app.UseSwaggerUI(opcoes =>
+    {
+        opcoes.SwaggerEndpoint("/openapi/v1.json", "Chamados de Manutencao v1");
+        opcoes.DocumentTitle = "Chamados de Manutencao";
+    });
+}
 
 app.MapearEndpoints();
 

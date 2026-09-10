@@ -31,12 +31,7 @@ public sealed class ChamadoConfiguration : IEntityTypeConfiguration<Chamado>
         builder.Property(c => c.Status).HasConversion<int>().IsRequired();
         builder.Property(c => c.ChamadoDeGarantia).IsRequired();
 
-        // Concorrencia otimista pela coluna de sistema xmin do PostgreSQL.
-        builder.Property<uint>("xmin")
-            .HasColumnName("xmin")
-            .HasColumnType("xid")
-            .ValueGeneratedOnAddOrUpdate()
-            .IsConcurrencyToken();
+        builder.UsarXmin();
 
         builder.Ignore(c => c.Anexos);
         builder.Ignore(c => c.HistoricoStatus);

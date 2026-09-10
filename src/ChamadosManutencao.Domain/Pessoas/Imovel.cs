@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using ChamadosManutencao.Domain.Common;
 using ChamadosManutencao.Domain.Enums;
 
@@ -23,18 +24,9 @@ public sealed class Imovel : Entidade
         string estado)
         : base(id)
     {
-        const string requisito = "RN0012";
-
         ClienteId = clienteId;
-        Apelido = Garantir.TextoComTamanhoMaximo(apelido, 60, "apelido do imovel", requisito);
-        TipoImovel = tipoImovel;
-        Logradouro = Garantir.TextoComTamanhoMaximo(logradouro, 200, "logradouro", requisito);
-        Numero = Garantir.TextoComTamanhoMaximo(numero, 20, "numero", requisito);
-        Complemento = string.IsNullOrWhiteSpace(complemento) ? null : complemento.Trim();
-        Bairro = Garantir.TextoComTamanhoMaximo(bairro, 120, "bairro", requisito);
-        Cep = Garantir.Cep(cep, requisito);
-        Cidade = Garantir.TextoComTamanhoMaximo(cidade, 120, "cidade", requisito);
-        Estado = ValidarEstado(estado);
+
+        Alterar(apelido, tipoImovel, logradouro, numero, complemento, bairro, cep, cidade, estado);
     }
 
     private Imovel()
@@ -68,6 +60,8 @@ public sealed class Imovel : Entidade
 
     public string Estado { get; private set; }
 
+    [MemberNotNull(nameof(Apelido), nameof(Logradouro), nameof(Numero), nameof(Bairro),
+        nameof(Cep), nameof(Cidade), nameof(Estado))]
     public void Alterar(
         string apelido,
         TipoImovel tipoImovel,

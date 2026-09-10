@@ -77,15 +77,6 @@ public class RF0081FormasDePagamentoTests
         excecao.Requisito.ShouldBe("RNF0061");
     }
 
-    [Fact]
-    public void Cartao_vencido_e_identificado_pela_validade()
-    {
-        var cartao = Cartao(validade: "01/2026");
-
-        cartao.EstaValido(new DateTimeOffset(2026, 1, 31, 23, 0, 0, TimeSpan.Zero)).ShouldBeTrue();
-        cartao.EstaValido(new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)).ShouldBeFalse();
-    }
-
     [Theory]
     [InlineData(TipoChavePix.Cpf, "39053344705", true)]
     [InlineData(TipoChavePix.Cpf, "390533447", false)]

@@ -43,9 +43,6 @@ public sealed class UsuarioRepositorio : IUsuarioRepositorio
                 u => u.Email == email.ToLower() && (ignorarId == null || u.Id != ignorarId),
                 cancellationToken);
 
-    public Task<bool> ExisteAdministradorAsync(CancellationToken cancellationToken = default) =>
-        _contexto.Administradores.AsNoTracking().AnyAsync(cancellationToken);
-
     public void Adicionar(Usuario usuario) => _contexto.Usuarios.Add(usuario);
 }
 
@@ -202,12 +199,17 @@ public sealed class AtendimentoRepositorio : IAtendimentoRepositorio
             .Include("_orcamentos._itens")
             .SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
 
+    /// <summary>
+    /// O mais recente: um chamado reaberto pela RN0035 acumula um atendimento por passagem.
+    /// </summary>
     public Task<Atendimento?> ObterPorChamadoAsync(
         Guid chamadoId,
         CancellationToken cancellationToken = default) =>
         _contexto.Atendimentos
             .Include("_orcamentos._itens")
-            .SingleOrDefaultAsync(a => a.ChamadoId == chamadoId, cancellationToken);
+            .Where(a => a.ChamadoId == chamadoId)
+            .OrderByDescending(a => a.DataHoraInicio)
+            .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<Atendimento?> ObterPorOrcamentoAsync(
         Guid orcamentoId,
@@ -231,13 +233,6 @@ public sealed class AtendimentoRepositorio : IAtendimentoRepositorio
         Guid atendimentoId,
         CancellationToken cancellationToken = default) =>
         _contexto.Garantias.SingleOrDefaultAsync(g => g.AtendimentoId == atendimentoId, cancellationToken);
-
-    public async Task<IReadOnlyCollection<Orcamento>> ObterOrcamentosVencidosAsync(
-        DateTimeOffset limite,
-        CancellationToken cancellationToken = default) =>
-        await _contexto.Orcamentos
-            .Where(o => o.Status == StatusOrcamento.Pendente && o.PrazoAprovacao < limite)
-            .ToListAsync(cancellationToken);
 
     public void Adicionar(Atendimento atendimento) => _contexto.Atendimentos.Add(atendimento);
 
@@ -285,13 +280,6 @@ public sealed class FaturaRepositorio : IFaturaRepositorio
         _contexto.Faturas
             .Include("_pagamentos")
             .SingleOrDefaultAsync(f => f.AtendimentoId == atendimentoId, cancellationToken);
-
-    public async Task<IReadOnlyCollection<Fatura>> ObterVencidasAsync(
-        DateTimeOffset limite,
-        CancellationToken cancellationToken = default) =>
-        await _contexto.Faturas
-            .Where(f => f.Status == StatusFatura.Emitida && f.DataVencimento < limite)
-            .ToListAsync(cancellationToken);
 
     public void Adicionar(Fatura fatura) => _contexto.Faturas.Add(fatura);
 }

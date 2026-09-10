@@ -110,8 +110,8 @@ public interface INotificador
 }
 
 /// <summary>
-/// Armazenamento dos anexos em volume local. O arquivo nunca e servido por caminho direto,
-/// sempre por endpoint autenticado.
+/// Armazenamento dos anexos em volume local. Hoje o sistema so grava: nenhum requisito pede
+/// download, entao a porta expoe apenas a escrita.
 /// </summary>
 public interface IArmazenamentoArquivos
 {
@@ -119,10 +119,4 @@ public interface IArmazenamentoArquivos
         string caminhoRelativo,
         Stream conteudo,
         CancellationToken cancellationToken = default);
-
-    Task<Stream> AbrirLeituraAsync(string caminhoRelativo, CancellationToken cancellationToken = default);
-
-    Task RemoverAsync(string caminhoRelativo, CancellationToken cancellationToken = default);
-
-    bool Existe(string caminhoRelativo);
 }

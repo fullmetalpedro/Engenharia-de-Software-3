@@ -59,32 +59,28 @@ public static class UC05TriagemEndpoints
             .WithSummary("Classifica a urgencia do chamado.")
             .WithDescription("Requisitos: RF0046.");
 
-        grupo.MapPost("/{id:guid}/atribuicao", async (
-                Guid id,
-                AtribuirTecnicoCommand comando,
-                AtribuirTecnicoHandler handler,
-                IValidator<AtribuirTecnicoCommand> validator,
-                CancellationToken cancellationToken) =>
-            {
-                await Validacao.GarantirValidoAsync(validator, comando, cancellationToken);
-                await handler.ExecutarAsync(id, comando, cancellationToken);
-                return Results.NoContent();
-            })
+        // RF0047 e RF0048 sao a mesma operacao vista de dois momentos: atribuir pela primeira
+        // vez e trocar quem ja estava. As duas rotas existem para que a documentacao mostre os
+        // dois requisitos.
+        static async Task<IResult> AtribuirAsync(
+            Guid id,
+            AtribuirTecnicoCommand comando,
+            AtribuirTecnicoHandler handler,
+            IValidator<AtribuirTecnicoCommand> validator,
+            CancellationToken cancellationToken)
+        {
+            await Validacao.GarantirValidoAsync(validator, comando, cancellationToken);
+            await handler.ExecutarAsync(id, comando, cancellationToken);
+
+            return Results.NoContent();
+        }
+
+        grupo.MapPost("/{id:guid}/atribuicao", AtribuirAsync)
             .RequireAuthorization(Politicas.Administrador)
             .WithSummary("Atribui um tecnico ao chamado.")
             .WithDescription("Requisitos: RF0047, RN0022, RN0023, RN0034.");
 
-        grupo.MapPut("/{id:guid}/atribuicao", async (
-                Guid id,
-                AtribuirTecnicoCommand comando,
-                AtribuirTecnicoHandler handler,
-                IValidator<AtribuirTecnicoCommand> validator,
-                CancellationToken cancellationToken) =>
-            {
-                await Validacao.GarantirValidoAsync(validator, comando, cancellationToken);
-                await handler.ExecutarAsync(id, comando, cancellationToken);
-                return Results.NoContent();
-            })
+        grupo.MapPut("/{id:guid}/atribuicao", AtribuirAsync)
             .RequireAuthorization(Politicas.Administrador)
             .WithSummary("Reatribui o chamado a outro tecnico.")
             .WithDescription("Requisitos: RF0048, RN0022, RN0023.");

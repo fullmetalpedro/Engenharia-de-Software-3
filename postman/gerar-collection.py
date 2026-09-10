@@ -491,7 +491,6 @@ VALOR_DE_QUERY = {
     "agruparPor": "categoria",
 }
 
-SEM_AUTENTICACAO = {("post", "/api/v1/auth/login"), ("post", "/api/v1/clientes"), ("get", "/health")}
 
 
 def descricao_da_query(parametro):
@@ -822,8 +821,14 @@ PASTA_JORNADA = {
 
 pastas = collections.OrderedDict()
 
+VERBOS = {"get", "post", "put", "patch", "delete", "head", "options", "trace"}
+
 for rota, operacoes in doc["paths"].items():
     for metodo, operacao in operacoes.items():
+        # `parameters`, `summary` e `$ref` sao irmaos legais dos verbos num path item.
+        if metodo not in VERBOS:
+            continue
+
         tag = (operacao.get("tags") or ["Outros"])[0]
         pastas.setdefault(tag, [])
 
@@ -948,7 +953,15 @@ collection = {
     "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]},
     "event": [evento(
         "prerequest",
-        "// Sem token? Rode 'Comecar aqui > Entrar como administrador' antes." + NL
+        "// A janela da analise acompanha o relogio: doze meses ate hoje (RN0062)." + NL
+        + "if (!pm.variables.get('dataFim')) {" + NL
+        + "    const hoje = new Date();" + NL
+        + "    const dozeMesesAtras = new Date(hoje.getFullYear() - 1, hoje.getMonth(), hoje.getDate());" + NL
+        + "    pm.collectionVariables.set('dataFim', hoje.toISOString());" + NL
+        + "    pm.collectionVariables.set('dataInicio', dozeMesesAtras.toISOString());" + NL
+        + "}" + NL
+        + NL
+        + "// Sem token? Rode 'Comecar aqui > Entrar como administrador' antes." + NL
         + "if (!pm.collectionVariables.get('token') && !pm.request.url.toString().includes('/auth/login')) {" + NL
         + "    console.warn('Nenhum token na collection. Rode a pasta Comecar aqui.');" + NL
         + "}",
@@ -965,14 +978,17 @@ ambiente = {
         {"key": "emailTecnico", "value": "", "enabled": True, "type": "default"},
         {"key": "emailCliente", "value": "", "enabled": True, "type": "default"},
         {"key": "senha", "value": "Senha@123", "enabled": True, "type": "default"},
-        {"key": "dataInicio", "value": "2025-09-01T00:00:00Z", "enabled": True, "type": "default"},
-        {"key": "dataFim", "value": "2026-09-01T00:00:00Z", "enabled": True, "type": "default"},
+        {"key": "dataInicio", "value": "", "enabled": True, "type": "default"},
+        {"key": "dataFim", "value": "", "enabled": True, "type": "default"},
     ],
     "_postman_variable_scope": "environment",
 }
 
-json.dump(collection, open(SAIDA_COLLECTION, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
-json.dump(ambiente, open(SAIDA_AMBIENTE, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+with open(SAIDA_COLLECTION, "w", encoding="utf-8") as arquivo:
+    json.dump(collection, arquivo, indent=2, ensure_ascii=False)
+
+with open(SAIDA_AMBIENTE, "w", encoding="utf-8") as arquivo:
+    json.dump(ambiente, arquivo, indent=2, ensure_ascii=False)
 
 total = sum(len(pasta["item"]) for pasta in itens)
 print("pastas: " + str(len(itens)) + "  requisicoes: " + str(total))

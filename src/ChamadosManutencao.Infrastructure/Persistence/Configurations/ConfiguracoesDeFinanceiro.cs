@@ -31,17 +31,12 @@ public sealed class FaturaConfiguration : IEntityTypeConfiguration<Fatura>
         builder.Property(f => f.ValorTotal).HasColumnType("decimal(12,2)").IsRequired();
         builder.Property(f => f.Status).HasConversion<int>().IsRequired();
 
-        // Concorrencia otimista pela coluna de sistema xmin do PostgreSQL.
-        builder.Property<uint>("xmin")
-            .HasColumnName("xmin")
-            .HasColumnType("xid")
-            .ValueGeneratedOnAddOrUpdate()
-            .IsConcurrencyToken();
+        builder.UsarXmin();
 
         builder.Ignore(f => f.Pagamentos);
         builder.Ignore(f => f.Eventos);
 
-        // RNF0011: filtros de RF0083 e varredura do job de vencimento.
+        // RNF0011: sustenta os filtros de status e periodo da RF0083.
         builder.HasIndex(f => new { f.Status, f.DataVencimento })
             .HasDatabaseName("ix_fatura_status_data_vencimento");
         builder.HasIndex(f => f.ClienteId).HasDatabaseName("ix_fatura_cliente_id");

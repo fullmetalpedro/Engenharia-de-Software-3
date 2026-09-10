@@ -35,6 +35,14 @@ public sealed class MiddlewareDeExcecao
 
     private async Task EscreverProblemaAsync(HttpContext contexto, Exception excecao)
     {
+        // Com a resposta ja iniciada nao da para trocar status nem corpo: reescrever aqui
+        // apagaria o erro real com um segundo erro.
+        if (contexto.Response.HasStarted)
+        {
+            _log.LogError(excecao, "Falha depois do inicio da resposta em {Rota}.", contexto.Request.Path);
+            throw excecao;
+        }
+
         var (status, titulo, tipo) = Classificar(excecao);
 
         if (status >= StatusCodes.Status500InternalServerError)

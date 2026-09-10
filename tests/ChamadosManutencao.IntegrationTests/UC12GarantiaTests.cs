@@ -98,6 +98,26 @@ public class UC12GarantiaTests : TesteDeIntegracao
         resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
     }
 
+    /// <summary>
+    /// RN0072: a garantia cobre o mesmo tipo de servico executado. Pedir outro tipo e recusado.
+    /// </summary>
+    [Fact]
+    public async Task Acionamento_para_outro_tipo_de_servico_e_recusado()
+    {
+        var cenario = await MontarCenarioBasicoAsync();
+        var (_, atendimento, _) = await ConcluirAtendimentoAsync(cenario);
+        await QuitarFaturaAsync(cenario);
+
+        var outroTipo = await CriarTipoServicoAsync(cenario.Categoria.Id, "Outro servico");
+
+        var resposta = await cenario.Cliente.Http.PostarAsync(
+            $"/api/v1/atendimentos/{atendimento.Id}/garantia/acionamento",
+            new AcionarGarantiaCommand("Outro defeito, de outra natureza.", outroTipo.Id));
+
+        resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
+        (await resposta.TextoAsync()).ShouldContain("tipo de servico");
+    }
+
     /// <summary>RN0072: passados 90 dias corridos a garantia venceu.</summary>
     [Fact]
     public async Task Acionamento_fora_do_prazo_de_90_dias_e_recusado()

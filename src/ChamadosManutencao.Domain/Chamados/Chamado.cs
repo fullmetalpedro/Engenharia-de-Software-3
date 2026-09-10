@@ -346,7 +346,7 @@ public sealed class Chamado : RaizDeAgregado
         Urgencia = urgencia;
     }
 
-    /// <summary>RF0042 e RF0057, com o limite da RNF0043 aplicado por origem (decisao D09).</summary>
+    /// <summary>RF0042 e RF0057. A RNF0043 limita a cinco arquivos por chamado.</summary>
     public void AdicionarAnexo(Anexo anexo)
     {
         Garantir.NaoNulo(anexo, "anexo", "RF0042");
@@ -356,7 +356,6 @@ public sealed class Chamado : RaizDeAgregado
             throw new ExcecaoDeDominio("O anexo pertence a outro chamado.", "RF0042");
         }
 
-        // RNF0043: o limite e por chamado, somando a abertura e a conclusao.
         if (_anexos.Count >= MaximoDeAnexos)
         {
             throw new ExcecaoDeDominio(
@@ -392,6 +391,15 @@ public sealed class Chamado : RaizDeAgregado
                 "RF0051");
         }
 
+        if (Status is not (StatusChamado.EmAnalise or StatusChamado.Agendado))
+        {
+            throw new ExcecaoDeDominio(
+                $"Nao e possivel agendar um chamado com status {Status}.",
+                "RN0034");
+        }
+
+        var reagendamento = Status == StatusChamado.Agendado;
+
         foreach (var anterior in _agendamentos.Where(a => a.OcupaAgenda()))
         {
             anterior.MarcarComoReagendado();
@@ -399,30 +407,16 @@ public sealed class Chamado : RaizDeAgregado
 
         _agendamentos.Add(agendamento);
 
-        if (Status == StatusChamado.EmAnalise)
-        {
-            AlterarStatus(
-                StatusChamado.Agendado,
-                usuarioResponsavelId,
-                $"Atendimento proposto para {agendamento.DataHoraProposta:dd/MM/yyyy HH:mm}.",
-                agora,
-                geradorId);
-        }
-        else if (Status == StatusChamado.Agendado)
-        {
-            AlterarStatus(
-                StatusChamado.Agendado,
-                usuarioResponsavelId,
-                $"Atendimento reagendado para {agendamento.DataHoraProposta:dd/MM/yyyy HH:mm}.",
-                agora,
-                geradorId);
-        }
-        else
-        {
-            throw new ExcecaoDeDominio(
-                $"Nao e possivel agendar um chamado com status {Status}.",
-                "RN0034");
-        }
+        var quando = agendamento.DataHoraProposta.ToString("dd/MM/yyyy HH:mm");
+
+        AlterarStatus(
+            StatusChamado.Agendado,
+            usuarioResponsavelId,
+            reagendamento
+                ? $"Atendimento reagendado para {quando}."
+                : $"Atendimento proposto para {quando}.",
+            agora,
+            geradorId);
     }
 
     /// <summary>RF0054: o inicio do atendimento leva o chamado para EM ATENDIMENTO.</summary>

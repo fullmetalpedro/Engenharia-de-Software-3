@@ -107,6 +107,32 @@ public class UC06AgendamentoTests : TesteDeIntegracao
         agendamentos.Count.ShouldBe(2);
     }
 
+    /// <summary>
+    /// RN0034: agendar um chamado concluido e recusado, e a recusa nao pode deixar o
+    /// agendamento que ja estava confirmado marcado como reagendado.
+    /// </summary>
+    [Fact]
+    public async Task Agendamento_recusado_nao_mexe_no_agendamento_confirmado()
+    {
+        var cenario = await MontarCenarioBasicoAsync();
+        var (chamado, _, _) = await ConcluirAtendimentoAsync(cenario);
+
+        var antes = await (await Admin.GetAsync($"/api/v1/chamados/{chamado.Id}/agendamentos"))
+            .LerAsync<IReadOnlyCollection<AgendamentoDto>>();
+
+        var resposta = await cenario.Tecnico.Http.PostarAsync(
+            $"/api/v1/chamados/{chamado.Id}/agendamentos",
+            new AgendarCommand(DateTimeOffset.UtcNow.AddDays(20), 120));
+
+        resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
+
+        var depois = await (await Admin.GetAsync($"/api/v1/chamados/{chamado.Id}/agendamentos"))
+            .LerAsync<IReadOnlyCollection<AgendamentoDto>>();
+
+        depois.Count.ShouldBe(antes.Count);
+        depois.Select(a => a.Status).ShouldBe(antes.Select(a => a.Status));
+    }
+
     /// <summary>RN0041: o tecnico nao pode ter dois atendimentos na mesma janela.</summary>
     [Fact]
     public async Task Agendamento_sobreposto_para_o_mesmo_tecnico_e_recusado()

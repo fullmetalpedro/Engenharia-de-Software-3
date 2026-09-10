@@ -225,6 +225,50 @@ técnico não tem assunto com fatura.
 
 ---
 
+## Correcoes vindas do code review
+
+### D32 — Um chamado reaberto precisa de mais de um atendimento
+A RN0035 devolve o chamado para EM ANALISE, mas o indice `ix_atendimento_chamado_id` era
+unico e o handler recusava qualquer segundo atendimento. Na pratica o chamado reaberto ficava
+sem saida: podia ser agendado, nunca reconcluido. O diagrama de classes desenha
+`Chamado 1 -- 0..1 Atendimento`, o que sustentava o indice.
+
+**Decisao:** vale a regra funcional. O indice deixou de ser unico (migration
+`PermitirVariosAtendimentosPorChamado`), o repositorio passou a devolver o atendimento mais
+recente e a trava do inicio passou a barrar apenas atendimento **em andamento**. Mesma
+natureza da D05: onde o texto do DRS e a cardinalidade do diagrama divergem, prevalece o
+comportamento que o requisito descreve.
+
+### D33 — A terceira condicao da RN0072 passou a comparar de verdade
+O handler passava o mesmo identificador nos dois lados de "mesmo tipo de servico executado",
+entao a condicao nunca reprovava. **Decisao:** `AcionarGarantiaCommand` aceita um
+`tipoServicoId` opcional. Omitido, o chamado de garantia herda o tipo do original; informado e
+diferente, a RN0072 recusa.
+
+### D34 — Prazos contam da conclusao mais recente
+Reabertura (RN0035) e janela de avaliacao (RN0052) resolviam a data de conclusao com
+`SingleOrDefault` sobre os atendimentos encerrados. Com o chamado reaberto e reconcluido havia
+mais de uma linha e a consulta estourava. **Decisao:** ordenar por data e usar a mais recente.
+
+### D35 — A documentacao nao vai para producao, e a chave de desenvolvimento nao passa
+O Swagger e o documento OpenAPI desenham o mapa das rotas e dos schemas para quem chega sem
+token. **Decisao:** publicados apenas fora de `Production`. Junto, a chave JWT versionada no
+`appsettings.json` passa a ser recusada no startup fora de `Development` — antes, esquecer a
+variavel de ambiente subia o sistema com uma chave que esta no repositorio.
+
+### D36 — Cartao vencido nao e recusado
+`CartaoCredito.EstaValido(DateTimeOffset)` nao tinha chamador: o pagamento nunca olhava a
+validade. Nenhum requisito pede essa recusa. **Decisao:** remover o metodo em vez de liga-lo,
+pela mesma regra da D27. `Validar()` ficou so com o token da operadora, que e o que permite
+cobrar (RNF0061).
+
+### D37 — Agendamento valida antes de mexer no agregado
+`Chamado.AdicionarAgendamento` marcava as propostas anteriores como reagendadas e adicionava a
+nova antes de checar o status; a recusa vinha depois, com o agregado ja alterado em memoria.
+**Decisao:** a verificacao de status subiu para o inicio do metodo.
+
+---
+
 ## Registro de ambiente
 
 - .NET SDK 10.0.400 e `dotnet-ef` 10.0.12 instalados durante a Fase 1.

@@ -89,6 +89,19 @@ public sealed class NotificadorPorLog : INotificador
             ReferenciaId = referenciaId
         });
 
-        await _contexto.SaveChangesAsync(cancellationToken);
+        // O despacho de eventos roda depois do commit do negocio: falhar aqui nao pode
+        // transformar uma operacao ja concluida em erro para quem chamou.
+        try
+        {
+            await _contexto.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception excecao)
+        {
+            _log.LogError(
+                excecao,
+                "Nao foi possivel registrar a notificacao {Assunto} para {Destinatario}.",
+                assunto,
+                destinatarioId);
+        }
     }
 }

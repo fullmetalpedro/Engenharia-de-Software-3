@@ -272,6 +272,44 @@ public class UC04ChamadosTests : TesteDeIntegracao
         detalhe.Status.ShouldBe(StatusChamado.EmAnalise);
     }
 
+    /// <summary>
+    /// RN0035: um chamado pode ir e voltar mais de uma vez. O prazo conta a partir da
+    /// conclusao mais recente, nao da primeira.
+    /// </summary>
+    [Fact]
+    public async Task Chamado_pode_ser_reaberto_duas_vezes()
+    {
+        var cenario = await MontarCenarioBasicoAsync();
+        var (chamado, _, _) = await ConcluirAtendimentoAsync(cenario);
+
+        await (await cenario.Cliente.Http.PostarAsync($"/api/v1/chamados/{chamado.Id}/reabertura"))
+            .DeveTerStatusAsync(HttpStatusCode.NoContent);
+
+        // Segundo ciclo completo: agendamento, atendimento e conclusao.
+        var agendamento = await (await cenario.Tecnico.Http.PostarAsync(
+                $"/api/v1/chamados/{chamado.Id}/agendamentos",
+                new ChamadosManutencao.Application.UC06Agendamento.AgendarCommand(
+                    DateTimeOffset.UtcNow.AddDays(30), 120)))
+            .LerAsync<AgendamentoDto>();
+
+        await (await cenario.Cliente.Http.PostarAsync(
+                $"/api/v1/agendamentos/{agendamento.Id}/confirmacao"))
+            .DeveTerStatusAsync(HttpStatusCode.OK);
+
+        var atendimento = await (await cenario.Tecnico.Http.PostarAsync(
+                $"/api/v1/chamados/{chamado.Id}/atendimento"))
+            .LerAsync<ChamadosManutencao.Application.UC07Atendimento.AtendimentoDto>();
+
+        await (await cenario.Tecnico.Http.PostarAsync(
+                $"/api/v1/atendimentos/{atendimento.Id}/conclusao",
+                new ChamadosManutencao.Application.UC07Atendimento.ConcluirAtendimentoCommand(
+                    "Segunda passagem, problema resolvido.")))
+            .DeveTerStatusAsync(HttpStatusCode.OK);
+
+        await (await cenario.Cliente.Http.PostarAsync($"/api/v1/chamados/{chamado.Id}/reabertura"))
+            .DeveTerStatusAsync(HttpStatusCode.NoContent);
+    }
+
     /// <summary>RN0035: passados os 7 dias a reabertura e recusada.</summary>
     [Fact]
     public async Task Reabertura_fora_do_prazo_e_recusada()

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using ChamadosManutencao.Domain.Common;
 
 namespace ChamadosManutencao.Domain.Catalogo;
@@ -17,20 +18,9 @@ public sealed class AreaAtendimento : Entidade
         decimal taxaDeslocamento)
         : base(id)
     {
-        const string requisito = "RF0027";
-
         TecnicoId = tecnicoId;
-        Bairro = Garantir.TextoComTamanhoMaximo(bairro, 120, "bairro da area de atendimento", requisito);
-        CepInicial = Garantir.Cep(cepInicial, requisito);
-        CepFinal = Garantir.Cep(cepFinal, requisito);
-        TaxaDeslocamento = Garantir.ValorNaoNegativo(taxaDeslocamento, "taxa de deslocamento", "RN0071");
 
-        if (string.CompareOrdinal(CepInicial, CepFinal) > 0)
-        {
-            throw new ExcecaoDeDominio(
-                "O CEP inicial da area de atendimento nao pode ser maior que o CEP final.",
-                requisito);
-        }
+        Alterar(bairro, cepInicial, cepFinal, taxaDeslocamento);
     }
 
     private AreaAtendimento()
@@ -59,6 +49,7 @@ public sealed class AreaAtendimento : Entidade
             && string.CompareOrdinal(normalizado, CepFinal) <= 0;
     }
 
+    [MemberNotNull(nameof(Bairro), nameof(CepInicial), nameof(CepFinal))]
     public void Alterar(string bairro, string cepInicial, string cepFinal, decimal taxaDeslocamento)
     {
         const string requisito = "RF0027";

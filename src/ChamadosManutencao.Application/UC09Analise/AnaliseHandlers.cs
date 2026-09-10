@@ -74,9 +74,6 @@ public sealed class FiltroDeAnaliseValidator : AbstractValidator<FiltroDeAnalise
             && filtro.DataFim <= filtro.DataInicio.AddMonths(IntervaloMaximoEmMeses);
     }
 
-    /// <summary>RN0061: o agrupamento e por mes, entao o intervalo tambem e contado em meses.</summary>
-    public static int QuantidadeDeMeses(DateTimeOffset inicio, DateTimeOffset fim) =>
-        ((fim.Year - inicio.Year) * 12) + fim.Month - inicio.Month + 1;
 }
 
 /// <summary>
@@ -172,11 +169,13 @@ public sealed class AnalisarChamadosHandler
             .OrderBy(serie => serie.Legenda)
             .ToList();
 
+        // O total tem que fechar com a soma das series: chamado sem tecnico atribuido nao vira
+        // legenda no agrupamento por tecnico e, por isso, tambem nao entra na conta.
         return new AnaliseDeChamadosDto(
             new PeriodoDaAnaliseDto(eixoX.First(), eixoX.Last()),
             eixoX,
             series,
-            linhas.Sum(l => l.Quantidade));
+            series.Sum(serie => serie.Valores.Sum()));
     }
 
     /// <summary>RF0074: exportacao dos dados apresentados no dashboard.</summary>

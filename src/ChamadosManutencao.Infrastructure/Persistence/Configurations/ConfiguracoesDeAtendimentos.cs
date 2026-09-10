@@ -18,18 +18,16 @@ public sealed class AtendimentoConfiguration : IEntityTypeConfiguration<Atendime
         builder.Property(a => a.DataHoraConclusao);
         builder.Property(a => a.RelatoTecnico).HasMaxLength(2000);
 
-        // Concorrencia otimista pela coluna de sistema xmin do PostgreSQL.
-        builder.Property<uint>("xmin")
-            .HasColumnName("xmin")
-            .HasColumnType("xid")
-            .ValueGeneratedOnAddOrUpdate()
-            .IsConcurrencyToken();
+        builder.UsarXmin();
 
         builder.Ignore(a => a.Orcamentos);
         builder.Ignore(a => a.EstaConcluido);
         builder.Ignore(a => a.Eventos);
 
-        builder.HasIndex(a => a.ChamadoId).HasDatabaseName("ix_atendimento_chamado_id").IsUnique();
+        // Sem unicidade: a RN0035 devolve o chamado para EM ANALISE e cada passagem gera um
+        // atendimento. O diagrama de classes desenha 0..1, mas com o indice unico o chamado
+        // reaberto nunca poderia ser reconcluido.
+        builder.HasIndex(a => a.ChamadoId).HasDatabaseName("ix_atendimento_chamado_id");
         builder.HasIndex(a => a.TecnicoId).HasDatabaseName("ix_atendimento_tecnico_id");
 
         builder.HasMany<Orcamento>("_orcamentos")
@@ -57,12 +55,7 @@ public sealed class OrcamentoConfiguration : IEntityTypeConfiguration<Orcamento>
         builder.Property(o => o.Status).HasConversion<int>().IsRequired();
         builder.Property(o => o.DataHoraDecisao);
 
-        // Concorrencia otimista pela coluna de sistema xmin do PostgreSQL.
-        builder.Property<uint>("xmin")
-            .HasColumnName("xmin")
-            .HasColumnType("xid")
-            .ValueGeneratedOnAddOrUpdate()
-            .IsConcurrencyToken();
+        builder.UsarXmin();
 
         builder.Ignore(o => o.Itens);
         builder.Ignore(o => o.Eventos);
@@ -123,7 +116,7 @@ public sealed class GarantiaConfiguration : IEntityTypeConfiguration<Garantia>
 
         builder.HasIndex(g => g.AtendimentoId).HasDatabaseName("ix_garantia_atendimento_id").IsUnique();
 
-        // O job de encerramento varre por data de fim.
+        // RN0072: a vigencia e consultada pela data de fim.
         builder.HasIndex(g => g.DataFim).HasDatabaseName("ix_garantia_data_fim");
     }
 }

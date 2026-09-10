@@ -40,4 +40,24 @@ public static class Autorizacao
             throw new AcessoNegadoException("Este recurso pertence a outro usuario.");
         }
     }
+
+    /// <summary>
+    /// Quem participa do atendimento: o cliente dono, o tecnico atribuido ou o administrador.
+    /// Chamado sem tecnico passa apenas para o dono e para o administrador.
+    /// </summary>
+    public static void ExigirEnvolvido(
+        IUsuarioAtual usuario,
+        Guid clienteId,
+        Guid? tecnicoId,
+        string recurso)
+    {
+        var id = ExigirAutenticado(usuario);
+
+        if (EhAdministrador(usuario) || id == clienteId || id == tecnicoId)
+        {
+            return;
+        }
+
+        throw new AcessoNegadoException($"Este {recurso} pertence a outro usuario.");
+    }
 }

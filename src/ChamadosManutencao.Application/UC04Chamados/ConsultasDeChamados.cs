@@ -159,15 +159,7 @@ public sealed class ObterChamadoHandler
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new RecursoNaoEncontradoException("Chamado", chamadoId);
 
-        // Cliente dono, tecnico atribuido ou administrador.
-        var usuarioId = Autorizacao.ExigirAutenticado(_usuarioAtual);
-
-        if (!Autorizacao.EhAdministrador(_usuarioAtual)
-            && usuarioId != chamado.ClienteId
-            && usuarioId != chamado.TecnicoId)
-        {
-            throw new AcessoNegadoException("Este chamado pertence a outro usuario.");
-        }
+        Autorizacao.ExigirEnvolvido(_usuarioAtual, chamado.ClienteId, chamado.TecnicoId, "chamado");
 
         var tipo = await _leitura.TiposServico
             .Where(t => t.Id == chamado.TipoServicoId)
@@ -259,14 +251,7 @@ public sealed class ConsultarHistoricoDeStatusHandler
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new RecursoNaoEncontradoException("Chamado", chamadoId);
 
-        var usuarioId = Autorizacao.ExigirAutenticado(_usuarioAtual);
-
-        if (!Autorizacao.EhAdministrador(_usuarioAtual)
-            && usuarioId != chamado.ClienteId
-            && usuarioId != chamado.TecnicoId)
-        {
-            throw new AcessoNegadoException("Este chamado pertence a outro usuario.");
-        }
+        Autorizacao.ExigirEnvolvido(_usuarioAtual, chamado.ClienteId, chamado.TecnicoId, "chamado");
 
         return await _leitura.HistoricosDeStatus
             .Where(h => h.ChamadoId == chamadoId)
@@ -308,14 +293,7 @@ public sealed class ConsultarAgendamentosHandler
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new RecursoNaoEncontradoException("Chamado", chamadoId);
 
-        var usuarioId = Autorizacao.ExigirAutenticado(_usuarioAtual);
-
-        if (!Autorizacao.EhAdministrador(_usuarioAtual)
-            && usuarioId != chamado.ClienteId
-            && usuarioId != chamado.TecnicoId)
-        {
-            throw new AcessoNegadoException("Este chamado pertence a outro usuario.");
-        }
+        Autorizacao.ExigirEnvolvido(_usuarioAtual, chamado.ClienteId, chamado.TecnicoId, "chamado");
 
         return await _leitura.Agendamentos
             .Where(a => a.ChamadoId == chamadoId)
