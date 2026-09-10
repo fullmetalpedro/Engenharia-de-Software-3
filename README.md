@@ -125,14 +125,14 @@ administrador cadastra o catálogo e os técnicos, e os clientes criam a própri
 **Unitários** — sem Docker nem banco, uma classe por regra de negócio:
 
 ```bash
-dotnet test tests/ChamadosManutencao.UnitTests          # 248 testes, < 1s
+dotnet test tests/ChamadosManutencao.UnitTests          # 247 testes, < 1s
 ```
 
 **Integração** — PostgreSQL 17 descartável via Testcontainers, HTTP real contra a API em
 memória. O Docker precisa estar rodando:
 
 ```bash
-dotnet test tests/ChamadosManutencao.IntegrationTests   # 150 testes, ~3min20
+dotnet test tests/ChamadosManutencao.IntegrationTests   # 153 testes, ~3min20
 ```
 
 Filtrando por caso de uso:

@@ -125,7 +125,7 @@ builder.Services.AddOpenApi(opcoes => opcoes.AddDocumentTransformer((documento, 
 var app = builder.Build();
 
 // ---------- Comandos de linha ----------
-// dotnet run --project src/ChamadosManutencao.Api -- seed | criar-admin
+// dotnet run --project src/ChamadosManutencao.Api -- criar-admin
 //
 // Nada de await no corpo do Program: WebApplicationFactory (usada pelos testes de
 // integracao) nao consegue capturar o host quando o ponto de entrada e assincrono.

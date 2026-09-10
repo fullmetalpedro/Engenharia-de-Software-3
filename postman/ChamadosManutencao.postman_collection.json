@@ -20,6 +20,14 @@
       "script": {
         "type": "text/javascript",
         "exec": [
+          "// A janela da analise acompanha o relogio: doze meses ate hoje (RN0062).",
+          "if (!pm.variables.get('dataFim')) {",
+          "    const hoje = new Date();",
+          "    const dozeMesesAtras = new Date(hoje.getFullYear() - 1, hoje.getMonth(), hoje.getDate());",
+          "    pm.collectionVariables.set('dataFim', hoje.toISOString());",
+          "    pm.collectionVariables.set('dataInicio', dozeMesesAtras.toISOString());",
+          "}",
+          "",
           "// Sem token? Rode 'Comecar aqui > Entrar como administrador' antes.",
           "if (!pm.collectionVariables.get('token') && !pm.request.url.toString().includes('/auth/login')) {",
           "    console.warn('Nenhum token na collection. Rode a pasta Comecar aqui.');",
@@ -4613,7 +4621,7 @@
             "description": "Aciona a garantia do atendimento, gerando um chamado de garantia.\nRequisitos: RF0085, RN0072, RN0022, RN0023, RNF0042. O chamado de garantia nao gera fatura; se o tecnico original nao servir mais, ele nasce sem tecnico, em EM ANALISE, e a resposta informa o motivo.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"descricaoProblema\": \"Vazamento embaixo da pia da cozinha desde ontem.\"\n}",
+              "raw": "{\n  \"descricaoProblema\": \"O mesmo defeito voltou depois de duas semanas.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

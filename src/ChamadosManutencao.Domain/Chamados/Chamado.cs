@@ -13,7 +13,7 @@ namespace ChamadosManutencao.Domain.Chamados;
 /// </summary>
 public sealed class Chamado : RaizDeAgregado
 {
-    /// <summary>RNF0043: no maximo 5 anexos por chamado, contados por origem (decisao D09).</summary>
+    /// <summary>RNF0043: no maximo 5 anexos por chamado.</summary>
     public const int MaximoDeAnexos = 5;
 
     /// <summary>RN0035: prazo de reabertura, em dias corridos apos a conclusao.</summary>

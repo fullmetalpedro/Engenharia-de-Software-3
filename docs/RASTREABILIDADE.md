@@ -73,7 +73,7 @@ Testcontainers).
 | RF0051 Agendar atendimento | UC06 | `POST /chamados/{id}/agendamentos`, `GET .../agendamentos` | `AgendarAtendimentoHandler`, `Chamado.AdicionarAgendamento` | `UC06AgendamentoTests.Tecnico_propoe_agendamento_e_o_chamado_fica_agendado` |
 | RF0052 Confirmar agendamento | UC06 | `POST /agendamentos/{id}/confirmacao` | `ConfirmarAgendamentoHandler`, `Agendamento.Confirmar` | `UC06AgendamentoTests.Cliente_confirma_o_agendamento_proposto` |
 | RF0053 Reagendar atendimento | UC06 | `POST /agendamentos/{id}/reagendamento` (cliente ou técnico) | `ReagendarAtendimentoHandler` | `UC06AgendamentoTests.Reagendamento_substitui_o_agendamento_anterior` |
-| RF0054 Registrar início | UC07 | `POST /chamados/{id}/atendimento` | `IniciarAtendimentoHandler`, `Chamado.RegistrarInicioDeAtendimento` | `UC07AtendimentoTests.Inicio_do_atendimento_muda_o_status_do_chamado` |
+| RF0054 Registrar início | UC07 | `POST /chamados/{id}/atendimento` | `IniciarAtendimentoHandler` (recusa apenas atendimento em andamento), `Chamado.RegistrarInicioDeAtendimento` | `UC07AtendimentoTests.Inicio_do_atendimento_muda_o_status_do_chamado` |
 | RF0055 Registrar orçamento | UC07 | `POST /atendimentos/{id}/orcamento`, `GET .../orcamento` | `RegistrarOrcamentoHandler`, `Orcamento` | `UC07AtendimentoTests.Orcamento_registrado_fica_pendente_com_prazo_de_48_horas` |
 | RF0056 Aprovar orçamento | UC07 | `POST /orcamentos/{id}/decisao` | `DecidirOrcamentoHandler`, `Orcamento.Aprovar/Recusar` | `UC07AtendimentoTests.Cliente_aprova_o_orcamento` |
 | RF0057 Registrar conclusão | UC07, UC11 | `POST /atendimentos/{id}/conclusao` | `ConcluirAtendimentoHandler`, `Atendimento.Concluir` | `UC07AtendimentoTests.Conclusao_encerra_o_chamado_e_abre_a_garantia` |
@@ -115,7 +115,7 @@ Testcontainers).
 | RN0032 Foto obrigatória | UC04 | `POST /chamados` | `AbrirChamadoHandler` (consulta `CategoriaServico.ExigeFoto`) | `RN0032FotoObrigatoriaTests`, `UC04ChamadosTests.Categoria_que_exige_foto_recusa_abertura_sem_anexo` |
 | RN0033 Regra de cancelamento | UC04, UC05 | `POST /chamados/{id}/cancelamento` | `Chamado.PodeSerCancelado`, `.Cancelar` | `RN0033CancelamentoTests`, `UC04ChamadosTests.Cliente_nao_cancela_chamado_em_atendimento` |
 | RN0034 Fluxo de status | UC04, UC05, UC06, UC07 | todos os que mudam status | `MaquinaDeEstadosDoChamado`, `Chamado.AlterarStatus` | `RN0034MaquinaDeEstadosTests` (teste parametrizado), `UC05TriagemTests.Transicao_de_status_invalida_e_recusada` |
-| RN0035 Reabertura de chamado | UC04, UC05 | `POST /chamados/{id}/reabertura` | `Chamado.SolicitarReabertura` | `RN0035ReaberturaTests`, `UC04ChamadosTests.Reabertura_fora_do_prazo_e_recusada` |
+| RN0035 Reabertura de chamado | UC04, UC05 | `POST /chamados/{id}/reabertura` | `Chamado.SolicitarReabertura` (prazo conta da conclusão mais recente) | `RN0035ReaberturaTests`, `UC04ChamadosTests.Reabertura_fora_do_prazo_e_recusada`, `.Chamado_pode_ser_reaberto_duas_vezes` |
 | RN0041 Disponibilidade do técnico | UC06 | `POST /chamados/{id}/agendamentos` | `Tecnico.EstaDisponivel`, `TecnicoRepositorio.ObterCompromissosAsync` | `RN0041DisponibilidadeTests`, `UC06AgendamentoTests.Agendamento_sobreposto_para_o_mesmo_tecnico_e_recusado` |
 | RN0042 Cancelamento por recusa de orçamento | UC07 | `POST /orcamentos/{id}/decisao` | `DecidirOrcamentoHandler` | `RN0042RecusaDeOrcamentoTests`, `UC07AtendimentoTests.Recusa_do_orcamento_cancela_o_chamado` |
 | RN0043 Prazo de 48 h do orçamento | UC07 | `POST /orcamentos/{id}/decisao` | `Orcamento.PrazoAprovacao`, `ExpiracaoOrcamentoJob` | `RN0043PrazoDeOrcamentoTests`, `UC07AtendimentoTests.Conclusao_com_orcamento_pendente_e_recusada` |
@@ -125,7 +125,7 @@ Testcontainers).
 | RN0062 Intervalo de 1 a 24 meses | UC09 | `GET /analises/chamados` | `FiltroDeAnaliseValidator` (piso e teto pela distância entre as datas) | `UC09AnaliseTests.Intervalo_maior_que_24_meses_e_recusado`, `.Intervalo_de_24_meses_e_aceito` |
 | RN0063 Cancelados fora da análise | UC09 | `GET /analises/chamados` | `AnalisarChamadosHandler` (filtro de status) | `UC09AnaliseTests.Chamado_cancelado_nao_e_contabilizado` |
 | RN0071 Composição da fatura | UC11, UC12 | efeito de `POST /atendimentos/{id}/conclusao` | `Fatura.CalcularValorTotal`, `ConcluirAtendimentoHandler.GerarFaturaAsync` | `RN0071ComposicaoDaFaturaTests`, `UC12GarantiaTests.Chamado_de_garantia_nao_gera_fatura` |
-| RN0072 Prazo e condições da garantia | UC12 | `POST /atendimentos/{id}/garantia/acionamento` | `Garantia.PodeSerAcionada`, `AcionarGarantiaHandler` | `RN0072GarantiaTests`, `UC12GarantiaTests.Acionamento_fora_do_prazo_de_90_dias_e_recusado`, `.Acionamento_com_fatura_em_aberto_e_recusado` |
+| RN0072 Prazo e condições da garantia | UC12 | `POST /atendimentos/{id}/garantia/acionamento` | `Garantia.PodeSerAcionada`, `AcionarGarantiaHandler` | `RN0072GarantiaTests`, `UC12GarantiaTests.Acionamento_fora_do_prazo_de_90_dias_e_recusado`, `.Acionamento_com_fatura_em_aberto_e_recusado`, `.Acionamento_para_outro_tipo_de_servico_e_recusado` |
 
 ---
 

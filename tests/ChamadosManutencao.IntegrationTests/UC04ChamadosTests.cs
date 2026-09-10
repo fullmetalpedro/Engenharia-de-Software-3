@@ -118,7 +118,7 @@ public class UC04ChamadosTests : TesteDeIntegracao
         await resposta.DeveTerStatusAsync(HttpStatusCode.Created);
     }
 
-    /// <summary>RF0042 e RNF0043: no maximo 5 anexos por origem.</summary>
+    /// <summary>RF0042 e RNF0043: no maximo 5 anexos por chamado.</summary>
     [Fact]
     public async Task Sexto_anexo_do_chamado_e_recusado()
     {

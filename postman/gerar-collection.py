@@ -154,6 +154,11 @@ CORPO_MANUAL = {
             {"descricao": "Mao de obra", "tipo": "MaoDeObra", "quantidade": 2, "valorUnitario": 75.00},
         ]
     },
+    # tipoServicoId e opcional: omitido, o chamado de garantia herda o tipo do original. Mandar
+    # um tipo diferente e justamente o que a RN0072 recusa, entao o exemplo nao o envia.
+    ("post", "/api/v1/atendimentos/{id}/garantia/acionamento"): {
+        "descricaoProblema": "O mesmo defeito voltou depois de duas semanas.",
+    },
     ("post", "/api/v1/clientes/{id}/formas-pagamento"): {
         "tipo": "CartaoCredito",
         "apelido": "Cartao principal",
@@ -230,8 +235,6 @@ CAPTURA = {
         + 'if (corpo.papel === "Administrador") pm.collectionVariables.set("administradorId", conteudo.sub);' + NL
         + 'console.log("Token ativo: " + corpo.papel + " (" + conteudo.sub + ")");'
     ),
-    ("post", "/api/v1/auth/refresh"):
-        'pm.collectionVariables.set("token", pm.response.json().accessToken);',
     ("post", "/api/v1/clientes"): (
         "const c = pm.response.json();" + NL
         + "// Guarda em variavel propria: clienteId continua sendo o do token em uso." + NL

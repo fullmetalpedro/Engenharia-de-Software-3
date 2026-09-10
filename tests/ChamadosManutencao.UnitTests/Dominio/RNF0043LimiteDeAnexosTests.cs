@@ -8,8 +8,8 @@ using Xunit;
 namespace ChamadosManutencao.UnitTests.Dominio;
 
 /// <summary>
-/// RNF0043: no maximo 5 anexos por chamado e 10 MB por arquivo. O limite e contado por origem
-/// (decisao D09): as fotos da conclusao nao consomem a cota das midias da abertura.
+/// RNF0043: no maximo 5 anexos por chamado e 10 MB por arquivo. A cota e do chamado
+/// inteiro, somando a abertura e a conclusao.
 /// </summary>
 [Trait("Requisito", "RNF0043")]
 public class RNF0043LimiteDeAnexosTests
