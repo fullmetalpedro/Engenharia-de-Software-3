@@ -197,6 +197,7 @@ public sealed class AtendimentoRepositorio : IAtendimentoRepositorio
     public Task<Atendimento?> ObterCompletoAsync(Guid id, CancellationToken cancellationToken = default) =>
         _contexto.Atendimentos
             .Include("_orcamentos._itens")
+            .Include("_fotosDaConclusao")
             .SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     /// <summary>
@@ -207,6 +208,7 @@ public sealed class AtendimentoRepositorio : IAtendimentoRepositorio
         CancellationToken cancellationToken = default) =>
         _contexto.Atendimentos
             .Include("_orcamentos._itens")
+            .Include("_fotosDaConclusao")
             .Where(a => a.ChamadoId == chamadoId)
             .OrderByDescending(a => a.DataHoraInicio)
             .FirstOrDefaultAsync(cancellationToken);

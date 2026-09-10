@@ -1,3 +1,4 @@
+using ChamadosManutencao.Domain.Chamados;
 using ChamadosManutencao.Domain.Common;
 using ChamadosManutencao.Domain.Enums;
 using ChamadosManutencao.Domain.Eventos;
@@ -12,6 +13,7 @@ namespace ChamadosManutencao.Domain.Atendimentos;
 public sealed class Atendimento : RaizDeAgregado
 {
     private readonly List<Orcamento> _orcamentos = [];
+    private readonly List<Anexo> _fotosDaConclusao = [];
 
     public Atendimento(
         Guid id,
@@ -40,6 +42,9 @@ public sealed class Atendimento : RaizDeAgregado
     public string? RelatoTecnico { get; private set; }
 
     public IReadOnlyCollection<Orcamento> Orcamentos => _orcamentos.AsReadOnly();
+
+    /// <summary>RF0057: fotos do servico finalizado, sem limite de quantidade.</summary>
+    public IReadOnlyCollection<Anexo> FotosDaConclusao => _fotosDaConclusao.AsReadOnly();
 
     public Guid? GarantiaId { get; private set; }
 
@@ -80,6 +85,26 @@ public sealed class Atendimento : RaizDeAgregado
         }
 
         _orcamentos.Add(orcamento);
+    }
+
+    /// <summary>RF0057: foto do servico finalizado, anexada na conclusao.</summary>
+    public void AdicionarFotoDaConclusao(Anexo foto)
+    {
+        Garantir.NaoNulo(foto, "foto da conclusao", "RF0057");
+
+        if (foto.AtendimentoId != Id)
+        {
+            throw new ExcecaoDeDominio("A foto pertence a outro atendimento.", "RF0057");
+        }
+
+        if (!foto.EhFoto())
+        {
+            throw new ExcecaoDeDominio(
+                "A conclusao aceita apenas fotos do servico finalizado.",
+                "RF0057");
+        }
+
+        _fotosDaConclusao.Add(foto);
     }
 
     public Orcamento? OrcamentoPendente() =>

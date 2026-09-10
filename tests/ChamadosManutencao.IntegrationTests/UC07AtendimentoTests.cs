@@ -3,6 +3,7 @@ using ChamadosManutencao.Application.UC04Chamados;
 using ChamadosManutencao.Application.UC07Atendimento;
 using ChamadosManutencao.Application.UC11Faturas;
 using ChamadosManutencao.Domain.Atendimentos;
+using ChamadosManutencao.Domain.Chamados;
 using ChamadosManutencao.Domain.Enums;
 using ChamadosManutencao.IntegrationTests.Comum;
 using Microsoft.EntityFrameworkCore;
@@ -155,6 +156,42 @@ public class UC07AtendimentoTests : TesteDeIntegracao
             new ConcluirAtendimentoCommand("Tentativa de conclusao com orcamento pendente."));
 
         resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
+    }
+
+    /// <summary>
+    /// RF0057 e RNF0043: a cota de 5 anexos e da midia do problema. Com o chamado no limite,
+    /// o tecnico ainda conclui anexando as fotos do servico finalizado.
+    /// </summary>
+    [Fact]
+    public async Task Fotos_da_conclusao_nao_esbarram_na_cota_de_anexos_do_chamado()
+    {
+        var cenario = await MontarCenarioBasicoAsync();
+        var (chamado, atendimento) = await IniciarAtendimentoAsync(cenario);
+
+        for (var indice = 0; indice < Chamado.MaximoDeAnexos; indice++)
+        {
+            using var anexo = new MultipartFormDataContent
+            {
+                { ConteudoDeFoto(), "arquivo", $"problema{indice}.jpg" }
+            };
+
+            await (await cenario.Cliente.Http.PostAsync($"/api/v1/chamados/{chamado.Id}/anexos", anexo))
+                .DeveTerStatusAsync(HttpStatusCode.Created);
+        }
+
+        using var conclusao = new MultipartFormDataContent
+        {
+            { new StringContent("Servico executado e testado com o cliente."), "relatoTecnico" },
+            { ConteudoDeFoto(), "arquivos", "servico-1.jpg" },
+            { ConteudoDeFoto(), "arquivos", "servico-2.jpg" }
+        };
+
+        var resultado = await (await cenario.Tecnico.Http.PostAsync(
+                $"/api/v1/atendimentos/{atendimento.Id}/conclusao",
+                conclusao))
+            .LerAsync<ResultadoDaConclusaoDto>();
+
+        resultado.Atendimento.FotosDaConclusao.Count.ShouldBe(2);
     }
 
     /// <summary>RF0057, RN0034, RN0051: conclusao gera garantia de 90 dias.</summary>

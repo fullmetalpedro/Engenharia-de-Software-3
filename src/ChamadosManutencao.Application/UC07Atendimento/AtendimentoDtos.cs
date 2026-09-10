@@ -1,3 +1,4 @@
+using ChamadosManutencao.Application.UC04Chamados;
 using ChamadosManutencao.Domain.Enums;
 using FluentValidation;
 
@@ -46,7 +47,8 @@ public sealed record AtendimentoDto(
     DateTimeOffset DataHoraInicio,
     DateTimeOffset? DataHoraConclusao,
     string? RelatoTecnico,
-    Guid? GarantiaId);
+    Guid? GarantiaId,
+    IReadOnlyCollection<AnexoDto> FotosDaConclusao);
 
 public sealed record GarantiaDto(
     Guid Id,

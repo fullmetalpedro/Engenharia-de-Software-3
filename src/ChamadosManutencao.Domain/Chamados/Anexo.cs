@@ -4,8 +4,9 @@ using ChamadosManutencao.Domain.Enums;
 namespace ChamadosManutencao.Domain.Chamados;
 
 /// <summary>
-/// Arquivo anexado a um chamado (fotos do problema e da conclusao) ou ao cadastro de um
-/// tecnico (certificacoes). Requisitos: RF0042, RF0057, RNF0032, RNF0043.
+/// Arquivo anexado a um chamado (midia do problema), a um atendimento (fotos do servico
+/// finalizado) ou ao cadastro de um tecnico (certificacoes).
+/// Requisitos: RF0042, RF0057, RNF0032, RNF0043.
 /// </summary>
 public sealed class Anexo : Entidade
 {
@@ -39,6 +40,7 @@ public sealed class Anexo : Entidade
         string caminho,
         OrigemAnexo origem,
         Guid? chamadoId,
+        Guid? atendimentoId,
         Guid? tecnicoId)
         : base(id)
     {
@@ -50,6 +52,7 @@ public sealed class Anexo : Entidade
         DataHoraUpload = dataHoraUpload;
         Origem = origem;
         ChamadoId = chamadoId;
+        AtendimentoId = atendimentoId;
         TecnicoId = tecnicoId;
 
         if (tamanhoBytes <= 0)
@@ -88,9 +91,11 @@ public sealed class Anexo : Entidade
 
     public Guid? ChamadoId { get; private set; }
 
+    public Guid? AtendimentoId { get; private set; }
+
     public Guid? TecnicoId { get; private set; }
 
-    /// <summary>RF0042 e RF0057: midia vinculada a um chamado.</summary>
+    /// <summary>RF0042: midia do problema, vinculada ao chamado.</summary>
     public static Anexo ParaChamado(
         Guid id,
         Guid chamadoId,
@@ -98,16 +103,8 @@ public sealed class Anexo : Entidade
         string tipoMime,
         long tamanhoBytes,
         DateTimeOffset dataHoraUpload,
-        string caminho,
-        OrigemAnexo origem)
+        string caminho)
     {
-        if (origem == OrigemAnexo.DocumentoTecnico)
-        {
-            throw new ExcecaoDeDominio(
-                "Documento de tecnico nao pode ser anexado a um chamado.",
-                "RNF0032");
-        }
-
         if (!TiposMimeDeMidia.Contains(tipoMime, StringComparer.OrdinalIgnoreCase))
         {
             throw new ExcecaoDeDominio(
@@ -122,8 +119,43 @@ public sealed class Anexo : Entidade
             tamanhoBytes,
             dataHoraUpload,
             caminho,
-            origem,
+            OrigemAnexo.ChamadoAbertura,
             chamadoId,
+            atendimentoId: null,
+            tecnicoId: null);
+    }
+
+    /// <summary>
+    /// RF0057: foto do servico finalizado. O diagrama de classes liga essas fotos ao
+    /// atendimento, e nao ao chamado, por isso elas ficam fora da cota de 5 da RNF0043,
+    /// que vale para a midia do problema.
+    /// </summary>
+    public static Anexo ParaAtendimento(
+        Guid id,
+        Guid atendimentoId,
+        string nomeArquivo,
+        string tipoMime,
+        long tamanhoBytes,
+        DateTimeOffset dataHoraUpload,
+        string caminho)
+    {
+        if (!TiposMimeDeMidia.Contains(tipoMime, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new ExcecaoDeDominio(
+                $"Tipo de arquivo '{tipoMime}' nao aceito para foto da conclusao.",
+                "RF0057");
+        }
+
+        return new Anexo(
+            id,
+            nomeArquivo,
+            tipoMime,
+            tamanhoBytes,
+            dataHoraUpload,
+            caminho,
+            OrigemAnexo.ConclusaoAtendimento,
+            chamadoId: null,
+            atendimentoId: atendimentoId,
             tecnicoId: null);
     }
 
@@ -153,6 +185,7 @@ public sealed class Anexo : Entidade
             caminho,
             OrigemAnexo.DocumentoTecnico,
             chamadoId: null,
+            atendimentoId: null,
             tecnicoId: tecnicoId);
     }
 

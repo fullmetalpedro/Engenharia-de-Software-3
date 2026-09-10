@@ -43,8 +43,7 @@ public class RN0032FotoObrigatoriaTests
             "video/mp4",
             2048,
             Construtor.Agora,
-            "storage/chamados/1/video.mp4",
-            OrigemAnexo.ChamadoAbertura));
+            "storage/chamados/1/video.mp4"));
 
         chamado.PossuiFotoDeAbertura().ShouldBeFalse();
     }
@@ -61,8 +60,7 @@ public class RN0032FotoObrigatoriaTests
             "image/jpeg",
             4096,
             Construtor.Agora,
-            "storage/chamados/1/equipamento.jpg",
-            OrigemAnexo.ChamadoAbertura));
+            "storage/chamados/1/equipamento.jpg"));
 
         chamado.PossuiFotoDeAbertura().ShouldBeTrue();
     }
@@ -72,15 +70,16 @@ public class RN0032FotoObrigatoriaTests
     {
         var chamado = Construtor.Chamado();
 
-        chamado.AdicionarAnexo(Anexo.ParaChamado(
+        var foto = Anexo.ParaAtendimento(
             Construtor.Id(32),
-            chamado.Id,
+            Construtor.Id(300),
             "servico-finalizado.jpg",
             "image/jpeg",
             4096,
             Construtor.Agora,
-            "storage/chamados/1/servico-finalizado.jpg",
-            OrigemAnexo.ConclusaoAtendimento));
+            "storage/atendimentos/1/servico-finalizado.jpg");
+
+        Should.Throw<ExcecaoDeDominio>(() => chamado.AdicionarAnexo(foto));
 
         chamado.PossuiFotoDeAbertura().ShouldBeFalse();
     }
@@ -97,9 +96,8 @@ public class RN0032FotoObrigatoriaTests
             "application/pdf",
             1024,
             Construtor.Agora,
-            "storage/tecnicos/1/certificado.pdf",
-            OrigemAnexo.DocumentoTecnico));
+            "storage/tecnicos/1/certificado.pdf"));
 
-        excecao.Requisito.ShouldBe("RNF0032");
+        excecao.Requisito.ShouldBe("RF0042");
     }
 }

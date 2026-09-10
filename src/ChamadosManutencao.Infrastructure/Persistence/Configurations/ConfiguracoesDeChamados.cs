@@ -66,8 +66,8 @@ public sealed class ChamadoConfiguration : IEntityTypeConfiguration<Chamado>
 }
 
 /// <summary>
-/// Anexo: pertence a um chamado ou a um tecnico, nunca aos dois (decisao D21).
-/// Requisitos: RF0042, RNF0032, RNF0043.
+/// Anexo: pertence a um chamado, a um atendimento ou a um tecnico, nunca a mais de um
+/// (decisao D21). Requisitos: RF0042, RF0057, RNF0032, RNF0043.
 /// </summary>
 public sealed class AnexoConfiguration : IEntityTypeConfiguration<Anexo>
 {
@@ -77,8 +77,7 @@ public sealed class AnexoConfiguration : IEntityTypeConfiguration<Anexo>
         {
             tabela.HasCheckConstraint(
                 "ck_anexo_dono_unico",
-                "(chamado_id IS NOT NULL AND tecnico_id IS NULL) "
-                + "OR (chamado_id IS NULL AND tecnico_id IS NOT NULL)");
+                "num_nonnulls(chamado_id, atendimento_id, tecnico_id) = 1");
 
             // RNF0043: 10 MB por arquivo.
             tabela.HasCheckConstraint(
@@ -99,6 +98,7 @@ public sealed class AnexoConfiguration : IEntityTypeConfiguration<Anexo>
         builder.Property(a => a.Origem).HasConversion<int>().IsRequired();
 
         builder.HasIndex(a => a.ChamadoId).HasDatabaseName("ix_anexo_chamado_id");
+        builder.HasIndex(a => a.AtendimentoId).HasDatabaseName("ix_anexo_atendimento_id");
         builder.HasIndex(a => a.TecnicoId).HasDatabaseName("ix_anexo_tecnico_id");
     }
 }

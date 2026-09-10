@@ -72,17 +72,14 @@ public sealed class Tecnico : Usuario
         _especialidades.AddRange(lista);
     }
 
-    /// <summary>RF0027.</summary>
+    /// <summary>
+    /// RF0027: a area de atendimento e opcional. A RN0021 lista como obrigatorios apenas nome,
+    /// CPF, telefone, e-mail e ao menos uma especialidade; sem area cadastrada o tecnico
+    /// simplesmente nunca passa na RN0023 e nao chega a ser atribuido a chamado nenhum.
+    /// </summary>
     public void DefinirAreasAtendimento(IEnumerable<AreaAtendimento> areas)
     {
         var lista = areas?.ToList() ?? [];
-
-        if (lista.Count == 0)
-        {
-            throw new ExcecaoDeDominio(
-                "O tecnico deve possuir ao menos uma area de atendimento.",
-                "RN0023");
-        }
 
         _areasAtendimento.Clear();
         _areasAtendimento.AddRange(lista);

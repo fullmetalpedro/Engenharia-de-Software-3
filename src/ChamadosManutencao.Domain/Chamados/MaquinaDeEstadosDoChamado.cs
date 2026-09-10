@@ -8,7 +8,8 @@ namespace ChamadosManutencao.Domain.Chamados;
 /// As transicoes EM_ATENDIMENTO -> CANCELADO e CONCLUIDO -> EM_ANALISE nao constam do texto
 /// literal da RN0034, mas sao exigidas por outras regras aprovadas:
 ///   - RN0042 e RN0043 cancelam o chamado durante o atendimento (recusa e expiracao de orcamento);
-///   - RN0035 devolve o chamado concluido para EM ANALISE na reabertura.
+///   - RN0035 devolve o chamado concluido para EM ANALISE na reabertura;
+///   - RF0053 mantem o chamado em AGENDADO quando o atendimento e reagendado.
 /// A ampliacao esta registrada em docs/DECISOES.md (decisao D05).
 /// </summary>
 public static class MaquinaDeEstadosDoChamado
@@ -29,7 +30,6 @@ public static class MaquinaDeEstadosDoChamado
         [
             StatusChamado.EmAtendimento,
             StatusChamado.Agendado,
-            StatusChamado.EmAnalise,
             StatusChamado.Cancelado
         ],
         [StatusChamado.EmAtendimento] =

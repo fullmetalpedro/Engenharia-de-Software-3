@@ -81,7 +81,14 @@ public sealed class IniciarAtendimentoHandler
         atendimento.DataHoraInicio,
         atendimento.DataHoraConclusao,
         atendimento.RelatoTecnico,
-        atendimento.GarantiaId);
+        atendimento.GarantiaId,
+        [.. atendimento.FotosDaConclusao.Select(foto => new AnexoDto(
+            foto.Id,
+            foto.NomeArquivo,
+            foto.TipoMime,
+            foto.TamanhoBytes,
+            foto.DataHoraUpload,
+            foto.Origem))]);
 }
 
 /// <summary>
@@ -343,33 +350,23 @@ public sealed class ConcluirAtendimentoHandler
         var chamado = await _chamados.ObterCompletoAsync(atendimento.ChamadoId, cancellationToken)
             ?? throw new RecursoNaoEncontradoException("Chamado", atendimento.ChamadoId);
 
-        // RF0057: as fotos do servico dividem com a abertura a cota da RNF0043. A recusa vem
-        // antes de gravar qualquer arquivo, senao um lote grande demais deixaria as primeiras
-        // fotos orfas no volume.
-        if (chamado.Anexos.Count + fotosDaConclusao.Count > Chamado.MaximoDeAnexos)
-        {
-            throw new ConflitoException(
-                $"Limite de {Chamado.MaximoDeAnexos} arquivos por chamado: o chamado ja tem "
-                + $"{chamado.Anexos.Count}.",
-                "RNF0043");
-        }
-
+        // RF0057: as fotos do servico finalizado pertencem ao atendimento, nao ao chamado, e
+        // por isso ficam fora da cota de 5 da RNF0043 (decisao D38).
         foreach (var arquivo in fotosDaConclusao)
         {
             var anexoId = _geradorId.NovoId();
-            var caminho = $"chamados/{chamado.Id}/{anexoId}{Path.GetExtension(arquivo.NomeArquivo)}";
+            var caminho = $"atendimentos/{atendimento.Id}/{anexoId}{Path.GetExtension(arquivo.NomeArquivo)}";
 
-            var anexo = Anexo.ParaChamado(
+            var foto = Anexo.ParaAtendimento(
                 anexoId,
-                chamado.Id,
+                atendimento.Id,
                 arquivo.NomeArquivo,
                 arquivo.TipoMime,
                 arquivo.TamanhoBytes,
                 _relogio.Agora,
-                caminho,
-                OrigemAnexo.ConclusaoAtendimento);
+                caminho);
 
-            chamado.AdicionarAnexo(anexo);
+            atendimento.AdicionarFotoDaConclusao(foto);
 
             await _armazenamento.GravarAsync(caminho, arquivo.Conteudo, cancellationToken);
         }

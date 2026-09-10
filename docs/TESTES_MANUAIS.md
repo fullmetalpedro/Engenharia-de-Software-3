@@ -110,7 +110,7 @@ curl -s -X POST $BASE/auth/login -H 'Content-Type: application/json' \
 | 35 | Abertura com foto (multipart) | RF0041, RF0042, RN0032 | 201 | ✅ chamado nº 41 |
 | 36 | Número sequencial | RNF0042 | incrementa | ✅ 41 → 42 → 43 → 44 |
 | 37 | Abertura não aceita urgência do cliente | RF0041, RF0046 | nasce `Media`; só sobe sozinha na categoria de risco | ✅ **(reverificado)** enviei `"urgencia":"Alta"` no corpo e o chamado nasceu `Media` |
-| 38 | Sexto anexo do mesmo chamado | RNF0043 | recusado | ✅ **(reverificado)** 5 aceitos, 6º = 422. A cota é do chamado, somando abertura e conclusão |
+| 38 | Sexto anexo do mesmo chamado | RNF0043 | recusado | ✅ **(reverificado)** 5 aceitos, 6º = 422. A cota é da mídia do problema; as fotos da conclusão pertencem ao atendimento (decisão D38) |
 | 39 | Cliente lista só os próprios chamados | RF0043 | 10 chamados da Ana | ✅ |
 | 40 | Cancelar chamado ABERTO | RF0045, RN0033 | 204 | ✅ status vira `Cancelado` |
 | 41 | Cancelar chamado EM ATENDIMENTO | RN0033 | recusado | ✅ 422 |

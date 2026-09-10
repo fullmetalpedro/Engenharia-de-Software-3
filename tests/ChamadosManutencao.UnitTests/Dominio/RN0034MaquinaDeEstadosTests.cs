@@ -34,6 +34,7 @@ public class RN0034MaquinaDeEstadosTests
         { StatusChamado.EmAnalise, StatusChamado.EmAtendimento },
         { StatusChamado.EmAnalise, StatusChamado.Concluido },
         { StatusChamado.Agendado, StatusChamado.Concluido },
+        { StatusChamado.Agendado, StatusChamado.EmAnalise },
         { StatusChamado.EmAtendimento, StatusChamado.Agendado },
         { StatusChamado.EmAtendimento, StatusChamado.EmAnalise },
         { StatusChamado.Concluido, StatusChamado.Cancelado },

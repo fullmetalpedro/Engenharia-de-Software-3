@@ -134,9 +134,6 @@ public sealed class CadastrarTecnicoValidator : AbstractValidator<CadastrarTecni
         RuleFor(t => t.EspecialidadeIds)
             .NotEmpty()
             .WithMessage("O cadastro de tecnico exige ao menos uma especialidade.");
-        RuleFor(t => t.AreasAtendimento)
-            .NotEmpty()
-            .WithMessage("O cadastro de tecnico exige ao menos uma area de atendimento.");
         RuleForEach(t => t.AreasAtendimento).SetValidator(new AreaAtendimentoValidator());
     }
 }
@@ -178,7 +175,6 @@ public sealed class DefinirAreasValidator : AbstractValidator<DefinirAreasComman
 {
     public DefinirAreasValidator()
     {
-        RuleFor(c => c.Areas).NotEmpty();
         RuleForEach(c => c.Areas).SetValidator(new AreaAtendimentoValidator());
     }
 }

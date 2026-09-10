@@ -1,4 +1,5 @@
 using ChamadosManutencao.Domain.Atendimentos;
+using ChamadosManutencao.Domain.Chamados;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -21,6 +22,7 @@ public sealed class AtendimentoConfiguration : IEntityTypeConfiguration<Atendime
         builder.UsarXmin();
 
         builder.Ignore(a => a.Orcamentos);
+        builder.Ignore(a => a.FotosDaConclusao);
         builder.Ignore(a => a.EstaConcluido);
         builder.Ignore(a => a.Eventos);
 
@@ -35,6 +37,12 @@ public sealed class AtendimentoConfiguration : IEntityTypeConfiguration<Atendime
             .HasForeignKey(o => o.AtendimentoId)
             .OnDelete(DeleteBehavior.Cascade);
         builder.Navigation("_orcamentos").UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany<Anexo>("_fotosDaConclusao")
+            .WithOne()
+            .HasForeignKey(a => a.AtendimentoId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation("_fotosDaConclusao").UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
 

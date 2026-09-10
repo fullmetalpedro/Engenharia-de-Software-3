@@ -60,7 +60,7 @@ sobreposição. **Decisão:** `Agendamento.DuracaoEmMinutos`, padrão configurá
 `Agendamento:DuracaoPadraoEmMinutos`. Dois agendamentos conflitam quando as janelas se
 sobrepõem; encostar no limite não é conflito.
 
-### D09 — O limite de 5 anexos é contado por origem
+### D09 — O limite de 5 anexos é contado por origem ~~(revogada pela D29)~~
 O diagrama separa "ilustrado por (0..5)" das "fotos da conclusão (0..*)". **Decisão:**
 `Chamado.AdicionarAnexo` conta por `OrigemAnexo`, então as fotos da conclusão não consomem a
 cota das mídias de abertura. O teto de 10 MB por arquivo vale para todos.
@@ -206,7 +206,7 @@ aceitava um campo `urgencia` do cliente, que na prática deixava qualquer um fur
 **Decisão:** o campo saiu. O chamado nasce `Media` e sobe para `Alta` sozinho apenas quando a
 categoria é de risco e o cliente marca `indicacaoDeRisco` — o gatilho que a RN0031 exige.
 
-### D29 — O limite de anexos é do chamado, não do momento
+### D29 — O limite de anexos é do chamado, não do momento ~~(revogada pela D38)~~
 Revoga a D09. A RNF0043 fala em cinco arquivos **por chamado**; a cota separada por origem
 permitia dez. **Decisão:** contar todos os anexos do chamado. A consequência é que fotos de
 abertura consomem a cota das fotos de conclusão da RF0057 — tensão que está no próprio DRS, e
@@ -266,6 +266,29 @@ cobrar (RNF0061).
 `Chamado.AdicionarAgendamento` marcava as propostas anteriores como reagendadas e adicionava a
 nova antes de checar o status; a recusa vinha depois, com o agregado ja alterado em memoria.
 **Decisao:** a verificacao de status subiu para o inicio do metodo.
+
+### D38 — As fotos da conclusão pertencem ao atendimento
+Revoga a D29. Contar tudo no chamado respeitava a letra da RNF0043, mas criava um beco: um
+cliente que anexasse cinco fotos do problema impedia o técnico de concluir com foto alguma, e a
+RF0057 pede exatamente essas fotos. O diagrama de classes já resolvia a tensão — `Chamado` é
+"ilustrado por" `0..5` anexos e `Atendimento` tem "fotos da conclusão" `0..*`, associações
+distintas. **Decisão:** a foto da conclusão é anexada ao atendimento (`Anexo.AtendimentoId`),
+fica fora da cota de 5, e a cota da RNF0043 passa a valer para a mídia do problema, que é do
+que a RF0042 trata. O teto de 10 MB por arquivo continua valendo para todos. `Anexo` agora tem
+três donos possíveis e continua aceitando exatamente um (`ck_anexo_dono_unico`).
+
+### D39 — Área de atendimento é opcional no cadastro do técnico
+A RN0021 lista como obrigatórios nome completo, CPF, telefone, e-mail e **ao menos uma
+especialidade** — a área de atendimento não está lá, e a RF0027 fala em "associar" regiões, não
+em exigi-las. **Decisão:** o cadastro e a alteração aceitam a lista vazia. Sem área o técnico
+simplesmente nunca passa na RN0023 e não chega a ser atribuído a chamado nenhum, que é o efeito
+correto sem inventar obrigatoriedade.
+
+### D40 — `AGENDADO` não volta para `EM ANÁLISE`
+A tabela de transições permitia `AGENDADO → EM ANÁLISE`, sem que regra nenhuma pedisse. A
+RN0034 não prevê a volta, e o reagendamento da RF0053 mantém o chamado em `AGENDADO`
+(`AGENDADO → AGENDADO`), então a transição não tinha chamador. **Decisão:** removida da
+`MaquinaDeEstadosDoChamado` e movida para a lista de transições inválidas do teste da RN0034.
 
 ---
 

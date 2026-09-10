@@ -1,3 +1,4 @@
+using ChamadosManutencao.Domain.Atendimentos;
 using ChamadosManutencao.Domain.Chamados;
 using ChamadosManutencao.Domain.Common;
 using ChamadosManutencao.Domain.Enums;
@@ -8,13 +9,13 @@ using Xunit;
 namespace ChamadosManutencao.UnitTests.Dominio;
 
 /// <summary>
-/// RNF0043: no maximo 5 anexos por chamado e 10 MB por arquivo. A cota e do chamado
-/// inteiro, somando a abertura e a conclusao.
+/// RNF0043: no maximo 5 anexos por chamado e 10 MB por arquivo. A cota vale para a midia
+/// do problema; as fotos da conclusao pertencem ao atendimento (decisao D38).
 /// </summary>
 [Trait("Requisito", "RNF0043")]
 public class RNF0043LimiteDeAnexosTests
 {
-    private static Anexo Midia(Guid chamadoId, int indice, OrigemAnexo origem, long tamanho = 1024) =>
+    private static Anexo Midia(Guid chamadoId, int indice, long tamanho = 1024) =>
         Anexo.ParaChamado(
             Construtor.Id(200 + indice),
             chamadoId,
@@ -22,8 +23,7 @@ public class RNF0043LimiteDeAnexosTests
             "image/jpeg",
             tamanho,
             Construtor.Agora,
-            $"storage/chamados/1/foto-{indice}.jpg",
-            origem);
+            $"storage/chamados/1/foto-{indice}.jpg");
 
     [Fact]
     public void Cinco_anexos_de_abertura_sao_aceitos()
@@ -32,7 +32,7 @@ public class RNF0043LimiteDeAnexosTests
 
         for (var i = 1; i <= 5; i++)
         {
-            chamado.AdicionarAnexo(Midia(chamado.Id, i, OrigemAnexo.ChamadoAbertura));
+            chamado.AdicionarAnexo(Midia(chamado.Id, i));
         }
 
         chamado.Anexos.Count.ShouldBe(5);
@@ -45,38 +45,50 @@ public class RNF0043LimiteDeAnexosTests
 
         for (var i = 1; i <= 5; i++)
         {
-            chamado.AdicionarAnexo(Midia(chamado.Id, i, OrigemAnexo.ChamadoAbertura));
+            chamado.AdicionarAnexo(Midia(chamado.Id, i));
         }
 
         var excecao = Should.Throw<ExcecaoDeDominio>(
-            () => chamado.AdicionarAnexo(Midia(chamado.Id, 6, OrigemAnexo.ChamadoAbertura)));
+            () => chamado.AdicionarAnexo(Midia(chamado.Id, 6)));
 
         excecao.Requisito.ShouldBe("RNF0043");
         chamado.Anexos.Count.ShouldBe(5);
     }
 
     /// <summary>
-    /// RNF0043 fala em cinco arquivos por chamado, sem separar por momento: as fotos da
-    /// conclusao dividem a mesma cota da abertura.
+    /// O diagrama de classes liga as fotos da conclusao ao atendimento (0..*), e nao ao
+    /// chamado (0..5): um chamado com a cota cheia ainda pode ser concluido com fotos.
     /// </summary>
     [Fact]
-    public void Fotos_da_conclusao_dividem_a_cota_do_chamado()
+    public void Fotos_da_conclusao_ficam_fora_da_cota_do_chamado()
     {
         var chamado = Construtor.Chamado();
 
-        for (var i = 1; i <= 4; i++)
+        for (var i = 1; i <= 5; i++)
         {
-            chamado.AdicionarAnexo(Midia(chamado.Id, i, OrigemAnexo.ChamadoAbertura));
+            chamado.AdicionarAnexo(Midia(chamado.Id, i));
         }
 
-        chamado.AdicionarAnexo(Midia(chamado.Id, 10, OrigemAnexo.ConclusaoAtendimento));
-        chamado.Anexos.Count.ShouldBe(5);
+        var atendimento = new Atendimento(
+            Construtor.Id(300),
+            chamado.Id,
+            Construtor.Id(4),
+            Construtor.Agora);
 
-        var excecao = Should.Throw<ExcecaoDeDominio>(() =>
-            chamado.AdicionarAnexo(Midia(chamado.Id, 11, OrigemAnexo.ConclusaoAtendimento)));
+        for (var i = 10; i <= 15; i++)
+        {
+            atendimento.AdicionarFotoDaConclusao(Anexo.ParaAtendimento(
+                Construtor.Id(400 + i),
+                atendimento.Id,
+                $"servico-{i}.jpg",
+                "image/jpeg",
+                1024,
+                Construtor.Agora,
+                $"storage/atendimentos/1/servico-{i}.jpg"));
+        }
 
-        excecao.Requisito.ShouldBe("RNF0043");
         chamado.Anexos.Count.ShouldBe(5);
+        atendimento.FotosDaConclusao.Count.ShouldBe(6);
     }
 
     [Fact]
@@ -87,7 +99,6 @@ public class RNF0043LimiteDeAnexosTests
         var excecao = Should.Throw<ExcecaoDeDominio>(() => Midia(
             chamado.Id,
             11,
-            OrigemAnexo.ChamadoAbertura,
             Anexo.TamanhoMaximoEmBytes + 1));
 
         excecao.Requisito.ShouldBe("RNF0043");
@@ -98,7 +109,7 @@ public class RNF0043LimiteDeAnexosTests
     {
         var chamado = Construtor.Chamado();
 
-        var anexo = Midia(chamado.Id, 12, OrigemAnexo.ChamadoAbertura, Anexo.TamanhoMaximoEmBytes);
+        var anexo = Midia(chamado.Id, 12, Anexo.TamanhoMaximoEmBytes);
 
         chamado.AdicionarAnexo(anexo);
 
@@ -111,6 +122,6 @@ public class RNF0043LimiteDeAnexosTests
         var chamado = Construtor.Chamado();
 
         Should.Throw<ExcecaoDeDominio>(
-            () => chamado.AdicionarAnexo(Midia(Construtor.Id(999), 13, OrigemAnexo.ChamadoAbertura)));
+            () => chamado.AdicionarAnexo(Midia(Construtor.Id(999), 13)));
     }
 }

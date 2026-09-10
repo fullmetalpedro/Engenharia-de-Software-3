@@ -133,8 +133,7 @@ public sealed class AbrirChamadoHandler
                 arquivo.TipoMime,
                 arquivo.TamanhoBytes,
                 _relogio.Agora,
-                caminho,
-                OrigemAnexo.ChamadoAbertura);
+                caminho);
 
             chamado.AdicionarAnexo(anexo);
 
@@ -212,8 +211,7 @@ public sealed class AnexarMidiaAoChamadoHandler
             arquivo.TipoMime,
             arquivo.TamanhoBytes,
             _relogio.Agora,
-            caminho,
-            OrigemAnexo.ChamadoAbertura);
+            caminho);
 
         // O limite da RNF0043 e verificado antes da gravacao em disco.
         chamado.AdicionarAnexo(anexo);

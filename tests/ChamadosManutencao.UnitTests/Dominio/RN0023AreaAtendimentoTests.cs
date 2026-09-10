@@ -63,4 +63,15 @@ public class RN0023AreaAtendimentoTests
             cepInicial: "05000000",
             cepFinal: "04000000"));
     }
+
+    [Fact]
+    public void Tecnico_sem_area_cadastrada_e_aceito_mas_nao_atende_cep_nenhum()
+    {
+        var tecnico = Construtor.Tecnico();
+
+        tecnico.DefinirAreasAtendimento([]);
+
+        tecnico.AreasAtendimento.ShouldBeEmpty();
+        tecnico.AtendeCep("04567000").ShouldBeFalse();
+    }
 }

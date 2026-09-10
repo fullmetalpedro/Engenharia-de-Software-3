@@ -366,9 +366,11 @@ public sealed class Chamado : RaizDeAgregado
         _anexos.Add(anexo);
     }
 
-    /// <summary>RN0032: a categoria que exige foto precisa de ao menos uma imagem na abertura.</summary>
-    public bool PossuiFotoDeAbertura() =>
-        _anexos.Any(a => a.Origem == OrigemAnexo.ChamadoAbertura && a.EhFoto());
+    /// <summary>
+    /// RN0032: a categoria que exige foto precisa de ao menos uma imagem. Todo anexo do
+    /// chamado e midia do problema; as fotos da conclusao ficam no atendimento.
+    /// </summary>
+    public bool PossuiFotoDeAbertura() => _anexos.Any(a => a.EhFoto());
 
     /// <summary>RF0051: registra a proposta de agendamento e leva o chamado para AGENDADO.</summary>
     public void AdicionarAgendamento(
