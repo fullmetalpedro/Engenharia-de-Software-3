@@ -70,20 +70,23 @@ public class UC04ChamadosTests : TesteDeIntegracao
     {
         var cenario = await MontarCenarioBasicoAsync(categoriaDeRisco: true);
 
-        var chamado = await AbrirChamadoAsync(cenario, Urgencia.Baixa, indicacaoDeRisco: true);
+        var chamado = await AbrirChamadoAsync(cenario, indicacaoDeRisco: true);
 
         chamado.Urgencia.ShouldBe(Urgencia.Alta);
     }
 
-    /// <summary>RN0031: sem indicacao de risco a urgencia informada e mantida.</summary>
+    /// <summary>
+    /// RF0041 e RF0046: o cliente nao escolhe a urgencia. Sem indicacao de risco o chamado
+    /// nasce com a urgencia padrao e so o administrador a classifica.
+    /// </summary>
     [Fact]
-    public async Task Sem_indicacao_de_risco_a_urgencia_informada_prevalece()
+    public async Task Sem_indicacao_de_risco_o_chamado_nasce_com_a_urgencia_padrao()
     {
         var cenario = await MontarCenarioBasicoAsync(categoriaDeRisco: true);
 
-        var chamado = await AbrirChamadoAsync(cenario, Urgencia.Baixa);
+        var chamado = await AbrirChamadoAsync(cenario);
 
-        chamado.Urgencia.ShouldBe(Urgencia.Baixa);
+        chamado.Urgencia.ShouldBe(PoliticaUrgencia.Padrao);
     }
 
     /// <summary>RN0032: categoria que exige foto recusa abertura sem anexo.</summary>
@@ -97,13 +100,11 @@ public class UC04ChamadosTests : TesteDeIntegracao
             cenario.Categoria.Id,
             cenario.TipoServico.Id,
             "Equipamento com defeito, sem foto.",
-            false,
-            Urgencia.Media);
+            false);
 
         var resposta = await cenario.Cliente.Http.PostarAsync("/api/v1/chamados", comando);
 
         await resposta.DeveTerStatusAsync(HttpStatusCode.Conflict);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0032");
     }
 
     /// <summary>RN0032: com a foto na mesma requisicao, a abertura passa.</summary>
@@ -124,7 +125,7 @@ public class UC04ChamadosTests : TesteDeIntegracao
         var cenario = await MontarCenarioBasicoAsync();
         var chamado = await AbrirChamadoAsync(cenario);
 
-        for (var indice = 0; indice < Chamado.MaximoDeAnexosPorOrigem; indice++)
+        for (var indice = 0; indice < Chamado.MaximoDeAnexos; indice++)
         {
             using var formulario = new MultipartFormDataContent
             {
@@ -157,14 +158,14 @@ public class UC04ChamadosTests : TesteDeIntegracao
         var outroCliente = await CadastrarClienteAsync();
 
         var meus = await (await cenario.Cliente.Http.GetAsync("/api/v1/chamados/meus"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
 
-        meus.Total.ShouldBe(1);
+        meus.Count.ShouldBe(1);
 
         var doOutro = await (await outroCliente.Http.GetAsync("/api/v1/chamados/meus"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
 
-        doOutro.Total.ShouldBe(0);
+        doOutro.Count.ShouldBe(0);
     }
 
     /// <summary>RF0043: filtro por status e por urgencia.</summary>
@@ -172,18 +173,24 @@ public class UC04ChamadosTests : TesteDeIntegracao
     public async Task Consulta_do_cliente_aceita_filtro_por_status_e_urgencia()
     {
         var cenario = await MontarCenarioBasicoAsync();
-        await AbrirChamadoAsync(cenario, Urgencia.Alta);
-        await AbrirChamadoAsync(cenario, Urgencia.Baixa);
+        var primeiro = await AbrirChamadoAsync(cenario);
+        await AbrirChamadoAsync(cenario);
+
+        // RF0046: quem define urgencia e o administrador.
+        await (await Admin.AlterarAsync(
+                $"/api/v1/chamados/{primeiro.Id}/urgencia",
+                new ChamadosManutencao.Application.UC05Triagem.ClassificarUrgenciaCommand(Urgencia.Alta)))
+            .DeveTerStatusAsync(HttpStatusCode.NoContent);
 
         var alta = await (await cenario.Cliente.Http.GetAsync("/api/v1/chamados/meus?urgencia=Alta"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
 
-        alta.Total.ShouldBe(1);
+        alta.Count.ShouldBe(1);
 
         var abertos = await (await cenario.Cliente.Http.GetAsync("/api/v1/chamados/meus?status=Aberto"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
 
-        abertos.Total.ShouldBe(2);
+        abertos.Count.ShouldBe(2);
     }
 
     /// <summary>O chamado de outro cliente nao pode ser lido pelo cliente errado.</summary>
@@ -225,7 +232,6 @@ public class UC04ChamadosTests : TesteDeIntegracao
         var resposta = await cenario.Cliente.Http.PostarAsync($"/api/v1/chamados/{chamado.Id}/cancelamento");
 
         await resposta.DeveTerStatusAsync(HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0033");
     }
 
     /// <summary>RF0050: o historico registra cada transicao com data, hora e responsavel.</summary>
@@ -287,6 +293,5 @@ public class UC04ChamadosTests : TesteDeIntegracao
         var resposta = await cenario.Cliente.Http.PostarAsync($"/api/v1/chamados/{chamado.Id}/reabertura");
 
         await resposta.DeveTerStatusAsync(HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0035");
     }
 }

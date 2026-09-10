@@ -95,32 +95,17 @@ opcional no dia a dia — fora de `Development` ele é obrigatório.
 
 | Endereço | O que é |
 |---|---|
-| `http://localhost:5080/health` | health check |
-| `http://localhost:5080/scalar/` | documentação OpenAPI navegável, agrupada por caso de uso |
-| `http://localhost:5080/openapi/v1.json` | o documento OpenAPI cru (68 operações) |
+| `http://localhost:5080/swagger` | Swagger UI: os endpoints agrupados por caso de uso, com cliente HTTP embutido |
+| `http://localhost:5080/openapi/v1.json` | o documento OpenAPI cru (66 operações) |
 
 O job de segundo plano sobe junto e **executa uma vez no startup**, repetindo a cada 15
 minutos. Para desligá-lo: `export Jobs__Habilitados=false`.
 
-## Popular a base com dados de exemplo
+## Criar o administrador
 
-```bash
-dotnet run --project src/ChamadosManutencao.Api -- seed
-```
-
-Roda **apenas em Development** e é idempotente: rodar duas vezes não duplica nada. Cria:
-
-- 1 administrador — `admin@chamados.local`
-- 4 técnicos — `carlos.ribeiro@`, `marina.alves@`, `joao.batista@`, `fernanda.lima@chamados.local`
-- 6 clientes — `ana.martins@`, `bruno.carvalho@`, `camila.nogueira@`, `diego.fonseca@`,
-  `elaine.prado@`, `fabio.teixeira@exemplo.com`
-- 4 categorias de serviço com seus tipos
-- 40 chamados espalhados nos últimos 12 meses, nos seis status
-- 15 faturas, cobrindo os quatro status
-
-**A senha de todos os usuários do seed é `Senha@123`.**
-
-## Criar o primeiro administrador fora de Development
+O sistema nasce vazio. Os 78 requisitos pressupõem o ator administrador em onze deles, mas
+nenhum descreve como cadastrá-lo — não há endpoint, e não deve haver. Ele entra por linha de
+comando:
 
 ```bash
 export ADMIN_INICIAL_EMAIL=admin@suaempresa.com.br
@@ -132,21 +117,22 @@ export ADMIN_INICIAL_MATRICULA=ADM-000001
 dotnet run --project src/ChamadosManutencao.Api -- criar-admin
 ```
 
-Idempotente: se já existe administrador, não faz nada.
+Idempotente: se já existe administrador, não faz nada. Daí em diante tudo passa pela API — o
+administrador cadastra o catálogo e os técnicos, e os clientes criam a própria conta.
 
 ## Testes
 
 **Unitários** — sem Docker nem banco, uma classe por regra de negócio:
 
 ```bash
-dotnet test tests/ChamadosManutencao.UnitTests          # 162 testes, < 1s
+dotnet test tests/ChamadosManutencao.UnitTests          # 248 testes, < 1s
 ```
 
 **Integração** — PostgreSQL 17 descartável via Testcontainers, HTTP real contra a API em
 memória. O Docker precisa estar rodando:
 
 ```bash
-dotnet test tests/ChamadosManutencao.IntegrationTests   # 156 testes, ~3min30
+dotnet test tests/ChamadosManutencao.IntegrationTests   # 150 testes, ~3min20
 ```
 
 Filtrando por caso de uso:
@@ -184,8 +170,8 @@ dotnet test tests/ChamadosManutencao.UnitTests --collect:"XPlat Code Coverage"
 |---|---|---|
 | `role "chamados" não existe` | outro PostgreSQL na porta 5432 | seção do conflito de porta |
 | `Jwt:ChaveSecreta deve ser configurada com ao menos 32 caracteres` | `.env` não copiado | `cp .env.example .env` e reabra o terminal |
+| 401 em tudo, inclusive no login do administrador | o `criar-admin` não rodou nesta base | rode-o com as variáveis `ADMIN_INICIAL_*` |
 | Testes de integração param criando o container | Docker parado ou imagem ausente | `docker version`, depois `docker pull postgres:17-alpine` |
-| Seed responde "A base já contém chamados" | o seed já rodou | é o comportamento idempotente; para recomeçar, `docker compose down -v` |
 | API sobe mas responde 500 em tudo | migrations não aplicadas fora de Development | rode o `dotnet ef database update` |
 
 Toda escrita fica gravada em `log_transacao` e toda notificação em `notificacao_enviada` — as
@@ -206,10 +192,10 @@ usá-la:
 - **[Collection do Postman](postman/README.md)** — os 68 endpoints por caso de uso, já com corpo
   preenchido, token do papel certo em cada requisição e os identificadores passando de uma
   chamada para a outra. É o painel de controle do sistema; comece por aqui.
-- **Scalar**, em `http://localhost:5080/scalar/` — a documentação OpenAPI navegável, com um
+- **Swagger UI**, em `http://localhost:5080/swagger` — a documentação OpenAPI navegável, com um
   cliente HTTP embutido.
 
-Os exemplos abaixo usam `curl` porque cabem no texto. No Postman e no Scalar é o mesmo, sem
+Os exemplos abaixo usam `curl` porque cabem no texto. No Postman e no Swagger é o mesmo, sem
 digitar.
 
 ## Os três papéis
@@ -220,8 +206,8 @@ digitar.
 | **Técnico** | quem executa o serviço | propõe horário, inicia o atendimento, registra orçamento, conclui o serviço |
 | **Administrador** | a empresa | mantém catálogo e técnicos, tria chamados, atribui técnico, responde avaliações, analisa o histórico |
 
-Autenticação por JWT Bearer em `POST /api/v1/auth/login`; o token vale 60 minutos e
-`POST /auth/refresh` reemite sem pedir a senha. Todo endpoint, exceto login e cadastro de
+Autenticação por JWT Bearer em `POST /api/v1/auth/login`; o token vale 60 minutos e depois é
+preciso entrar de novo. Todo endpoint, exceto login e cadastro de
 cliente, exige token. Além do papel, os endpoints de dono checam a propriedade: o cliente só
 enxerga os próprios chamados, o técnico só executa o atendimento que lhe foi atribuído.
 
@@ -239,7 +225,8 @@ curl -s -X POST $BASE/auth/login -H 'Content-Type: application/json' \
 ## Colocando a operação de pé
 
 Ordem importa: um chamado só existe se houver categoria, tipo de serviço, técnico habilitado e
-cliente com imóvel. Faça uma vez, na implantação.
+cliente com imóvel. Faça uma vez, na implantação. O administrador já deve existir — ele vem do
+`criar-admin`, descrito na Parte 1.
 
 ### 1. Montar o catálogo de serviços
 
@@ -348,8 +335,13 @@ abertura: não existe chamado meio-criado esperando anexo.
 { "id": "01a08391-...", "numero": 41, "status": "Aberto", "urgencia": "Alta" }
 ```
 
-Note a urgência: o cliente pediu `Media`, mas marcou risco numa categoria de risco, e o sistema
-subiu para `Alta`. Limite de 5 arquivos por chamado, 10 MB cada.
+O RF0041 lista quatro dados na abertura — imóvel, categoria, tipo de serviço e descrição — e o
+RF0046 dá a classificação de urgência ao administrador. Por isso **o cliente não escolhe a
+urgência**: o chamado nasce `Media`, e só sobe para `Alta` sozinho quando a categoria é de risco
+e o cliente marca `indicacaoDeRisco`, que é o gatilho que o RN0031 exige.
+
+Limite de **5 arquivos por chamado**, 10 MB cada — a cota é do chamado inteiro, somando o que
+entra na abertura e o que o técnico anexa na conclusão.
 
 ### Acompanhar, confirmar horário, decidir o orçamento
 
@@ -550,24 +542,25 @@ avaliação de 15 dias (RN0052) e a garantia de 90 dias (RN0072) recusam a opera
 prazo já passou.
 
 O status `Vencida` da fatura existe no modelo e é filtrável na consulta (RF0083), mas nada no
-DRS pede que o sistema faça essa transição sozinho: hoje só o seed a produz.
+DRS pede que o sistema faça essa transição sozinho — nenhum requisito descreve quem a executa.
 
 Além disso, **toda mudança de status notifica o cliente** e **toda escrita é auditada**. Senha e
 token de cartão aparecem no log como `"***"` — nunca em claro.
 
 ## Quando o sistema diz não
 
-Erros de negócio vêm em ProblemDetails com o campo `requisito`, que aponta a regra violada. Dá
-para mostrar a mensagem ao usuário e rastrear a origem no DRS.
+Erros de negócio vêm em ProblemDetails (RFC 9457), com a mensagem pronta para mostrar ao
+usuário:
 
 ```json
 {
   "title": "Regra de negocio violada",
   "status": 422,
-  "detail": "O tecnico nao possui a categoria do chamado entre suas especialidades.",
-  "requisito": "RN0022"
+  "detail": "O tecnico nao possui a categoria do chamado entre suas especialidades."
 }
 ```
+
+A coluna *Regra* da tabela abaixo é deste documento, não da resposta.
 
 | Você tentou | Resposta | Regra | Saída |
 |---|---|---|---|
@@ -618,21 +611,15 @@ Limites desta versão, para você não descobrir em produção:
 
 ## Conhecer o sistema em 10 minutos
 
-Com o seed aplicado e a senha `Senha@123` valendo para todos:
+Com o administrador criado e a API no ar, importe a [collection do
+Postman](postman/README.md) e rode a pasta **Jornada completa**: 18 passos que montam o cenário
+e percorrem o caminho inteiro sem intervenção — catálogo, equipe, conta do cliente, abertura,
+triagem, agendamento, atendimento, orçamento, conclusão, fatura, pagamento, avaliação e
+garantia. No fim ela imprime o histórico de status do chamado, que é a jornada resumida numa
+linha.
 
-1. Entre como `admin@chamados.local` e veja a fila: `GET /chamados?status=Aberto`
-2. Veja o gráfico de um ano: `GET /analises/chamados?dataInicio=...&dataFim=...`
-3. Entre como `ana.martins@exemplo.com` e abra um chamado com foto
-4. Volte ao administrador e atribua `carlos.ribeiro@chamados.local`
-5. Entre como o técnico, proponha horário, e confirme como a cliente
-6. Como técnico: inicie, registre orçamento, conclua
-7. Como cliente: veja a fatura que apareceu, cadastre um PIX e pague
-8. Avalie com nota 5; volte como administrador e responda
-9. Acione a garantia e veja o chamado novo nascer vinculado ao original
-10. Termine olhando `GET /chamados/{id}/historico-status` — a jornada inteira, registrada
-
-No Postman, essa sequência é a pasta **Jornada completa**: 18 passos que rodam de ponta a ponta
-sem intervenção.
+Se preferir na mão, a mesma sequência está em [`docs/TESTES_MANUAIS.md`](docs/TESTES_MANUAIS.md),
+com o `curl` de cada passo.
 
 ---
 

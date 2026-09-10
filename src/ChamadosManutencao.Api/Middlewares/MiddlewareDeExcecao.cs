@@ -80,14 +80,6 @@ public sealed class MiddlewareDeExcecao
             case System.Text.Json.JsonException json when json.Path is not null:
                 problema.Extensions["campo"] = json.Path;
                 break;
-
-            case ExcecaoDeDominio dominio when dominio.Requisito is not null:
-                problema.Extensions["requisito"] = dominio.Requisito;
-                break;
-
-            case ConflitoException conflito when conflito.Requisito is not null:
-                problema.Extensions["requisito"] = conflito.Requisito;
-                break;
         }
 
         contexto.Response.Clear();

@@ -34,12 +34,12 @@ public class UC11FaturasTests : TesteDeIntegracao
         var outro = await CadastrarClienteAsync();
 
         var minhas = await (await cenario.Cliente.Http.GetAsync("/api/v1/faturas/minhas"))
-            .LerAsync<ResultadoPaginado<FaturaDto>>();
-        minhas.Total.ShouldBe(1);
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
+        minhas.Count.ShouldBe(1);
 
         var doOutro = await (await outro.Http.GetAsync("/api/v1/faturas/minhas"))
-            .LerAsync<ResultadoPaginado<FaturaDto>>();
-        doOutro.Total.ShouldBe(0);
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
+        doOutro.Count.ShouldBe(0);
     }
 
     /// <summary>RF0083: filtros por status, periodo e numero do chamado.</summary>
@@ -50,23 +50,23 @@ public class UC11FaturasTests : TesteDeIntegracao
         var (chamado, _, _) = await ConcluirAtendimentoAsync(cenario);
 
         var porStatus = await (await Admin.GetAsync("/api/v1/faturas?status=Emitida"))
-            .LerAsync<ResultadoPaginado<FaturaDto>>();
-        porStatus.Total.ShouldBe(1);
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
+        porStatus.Count.ShouldBe(1);
 
         var porChamado = await (await Admin.GetAsync($"/api/v1/faturas?numeroChamado={chamado.Numero}"))
-            .LerAsync<ResultadoPaginado<FaturaDto>>();
-        porChamado.Total.ShouldBe(1);
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
+        porChamado.Count.ShouldBe(1);
 
         var porPeriodo = await (await Admin.GetAsync(
                 "/api/v1/faturas"
                 + $"?dataInicio={Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-1).ToString("O"))}"
                 + $"&dataFim={Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(1).ToString("O"))}"))
-            .LerAsync<ResultadoPaginado<FaturaDto>>();
-        porPeriodo.Total.ShouldBe(1);
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
+        porPeriodo.Count.ShouldBe(1);
 
         var porCliente = await (await Admin.GetAsync($"/api/v1/faturas?clienteId={cenario.Cliente.Id}"))
-            .LerAsync<ResultadoPaginado<FaturaDto>>();
-        porCliente.Total.ShouldBe(1);
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
+        porCliente.Count.ShouldBe(1);
     }
 
     /// <summary>RF0084: pagamento aprovado quita a fatura e registra a transacao.</summary>
@@ -172,9 +172,9 @@ public class UC11FaturasTests : TesteDeIntegracao
         novoAtendimento.FaturaId.ShouldBeNull();
 
         var faturas = await (await cenario.Cliente.Http.GetAsync("/api/v1/faturas/minhas"))
-            .LerAsync<ResultadoPaginado<FaturaDto>>();
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
 
-        faturas.Total.ShouldBe(1);
+        faturas.Count.ShouldBe(1);
     }
 
     private async Task<ResultadoDaConclusaoDto> ExecutarAtendimentoDeGarantiaAsync(

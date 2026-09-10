@@ -114,21 +114,21 @@ public class UC01ClientesTests : TesteDeIntegracao
         await CadastrarClienteAsync();
 
         var porEmail = await (await Admin.GetAsync($"/api/v1/clientes?email={cliente.Email}"))
-            .LerAsync<ResultadoPaginado<ClienteResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ClienteResumoDto>>();
 
-        porEmail.Total.ShouldBe(1);
-        porEmail.Itens.Single().Id.ShouldBe(cliente.Id);
+        porEmail.Count.ShouldBe(1);
+        porEmail.Single().Id.ShouldBe(cliente.Id);
 
         var porNome = await (await Admin.GetAsync("/api/v1/clientes?nome=Cliente"))
-            .LerAsync<ResultadoPaginado<ClienteResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ClienteResumoDto>>();
 
-        porNome.Total.ShouldBe(2);
+        porNome.Count.ShouldBe(2);
 
         var combinado = await (await Admin.GetAsync(
                 $"/api/v1/clientes?nome=Cliente&codigo={cliente.Dados.CodigoCliente}&ativo=true"))
-            .LerAsync<ResultadoPaginado<ClienteResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ClienteResumoDto>>();
 
-        combinado.Total.ShouldBe(1);
+        combinado.Count.ShouldBe(1);
     }
 
     /// <summary>RF0012.</summary>
@@ -198,7 +198,6 @@ public class UC01ClientesTests : TesteDeIntegracao
             $"/api/v1/clientes/{cliente.Id}/imoveis/{cliente.ImovelId}");
 
         await resposta.DeveTerStatusAsync(HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0011");
     }
 
     [Fact]

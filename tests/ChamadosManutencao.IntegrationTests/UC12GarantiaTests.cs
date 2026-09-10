@@ -96,7 +96,6 @@ public class UC12GarantiaTests : TesteDeIntegracao
             new AcionarGarantiaCommand("Defeito reincidente com fatura em aberto."));
 
         resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0072");
     }
 
     /// <summary>RN0072: passados 90 dias corridos a garantia venceu.</summary>
@@ -126,7 +125,6 @@ public class UC12GarantiaTests : TesteDeIntegracao
             new AcionarGarantiaCommand("Acionamento tardio."));
 
         resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0072");
     }
 
     [Fact]
@@ -157,9 +155,9 @@ public class UC12GarantiaTests : TesteDeIntegracao
             .LerAsync<FormaPagamentoDto>();
 
         var faturas = await (await cenario.Cliente.Http.GetAsync("/api/v1/faturas/minhas"))
-            .LerAsync<Application.Common.ResultadoPaginado<FaturaDto>>();
+            .LerAsync<IReadOnlyCollection<FaturaDto>>();
 
-        var emAberto = faturas.Itens.First(f => f.Status == StatusFatura.Emitida);
+        var emAberto = faturas.First(f => f.Status == StatusFatura.Emitida);
 
         await (await cenario.Cliente.Http.PostarAsync(
                 $"/api/v1/faturas/{emAberto.Id}/pagamentos",

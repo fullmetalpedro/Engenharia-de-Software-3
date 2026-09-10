@@ -92,10 +92,12 @@ A prioridade `Alta` automática é o padrão inicial, não uma trava. A alteraç
 
 ## Modelo, segurança e API
 
-### D14 — `refresh` reemite a partir de token válido
+### D14 — `refresh` reemite a partir de token válido ~~(revogada pela D27)~~
 Não há entidade `RefreshToken` no diagrama. **Decisão:** `POST /auth/refresh` exige token
-válido e reemite, sem persistir refresh tokens. Se a exigência mudar, entra uma tabela na
-infraestrutura sem tocar no domínio.
+válido e reemite, sem persistir refresh tokens.
+
+**Revogada:** o endpoint saiu. Nenhum requisito menciona login, token ou sessão — o que o
+diagrama traz é `Usuario.autenticar()`, que sustenta o login e não a reemissão. Ver D27.
 
 ### D15 — Primeiro administrador vem por comando de linha
 Fora de `Development` não existe caminho para criar o primeiro administrador (o cadastro de
@@ -171,6 +173,55 @@ requisito é código que precisa de manutenção e não responde a ninguém.
 **Consequência assumida:** `Fatura.RegistrarVencimento` e o evento `FaturaVencida` continuam no
 domínio, mas hoje só o seed os aciona — nenhuma fatura passa a `Vencida` sozinha em produção.
 Se o vencimento automático virar requisito, o job volta em uma classe.
+
+### D27 — Fora o `criar-admin`, o que não tem requisito saiu
+Auditoria dos 78 requisitos contra o código encontrou funcionalidades sem lastro em RF, RN ou
+RNF. **Decisão:** remover, e registrar aqui o que cada uma custava.
+
+| Removido | Por quê |
+|---|---|
+| `POST /auth/refresh` | o DRS não menciona login, token nem sessão; o diagrama traz `Usuario.autenticar()`, que sustenta o login, não a reemissão |
+| `GET /health` | operacional, nascido da seção 11 da arquitetura |
+| Cabeçalho `X-Tempo-De-Resposta-Ms` | acréscimo sobre a RNF0011; o log de aviso acima de 1000 ms fica |
+| Campo `requisito` no ProblemDetails | rastreabilidade agradável, requisito nenhum |
+| Paginação | nenhum requisito de consulta a pede; as listas voltam inteiras |
+| Comando `seed` | ferramenta de demonstração |
+
+**Mantido:** `criar-admin`. Onze requisitos pressupõem o ator administrador e nenhum documento
+diz como ele passa a existir — a classe, a matrícula, a senha e o `ativo` estão no diagrama de
+classes, só falta o ato de criar a primeira linha. Sem ele o sistema não se levanta fora de
+`Development`. É bootstrap de infraestrutura, da mesma natureza de aplicar migration.
+
+**Trocado:** Scalar por Swagger UI, a pedido. O documento OpenAPI continua sendo o do próprio
+ASP.NET; mudou só quem o renderiza.
+
+**Consequência assumida:** sem paginação, a consulta cresce com a base, o que pressiona a
+RNF0011. O teto de 100 itens por página era proteção; a regra escrita fala em resposta de 1
+segundo, não em página.
+
+### D28 — Urgência não é dado de abertura
+O RF0041 lista quatro dados que o cliente informa: imóvel, categoria, tipo de serviço e
+descrição. O RF0046 dá a classificação de urgência ao administrador. O comando de abertura
+aceitava um campo `urgencia` do cliente, que na prática deixava qualquer um furar a fila.
+**Decisão:** o campo saiu. O chamado nasce `Media` e sobe para `Alta` sozinho apenas quando a
+categoria é de risco e o cliente marca `indicacaoDeRisco` — o gatilho que a RN0031 exige.
+
+### D29 — O limite de anexos é do chamado, não do momento
+Revoga a D09. A RNF0043 fala em cinco arquivos **por chamado**; a cota separada por origem
+permitia dez. **Decisão:** contar todos os anexos do chamado. A consequência é que fotos de
+abertura consomem a cota das fotos de conclusão da RF0057 — tensão que está no próprio DRS, e
+que resolvemos pela letra da RNF0043.
+
+### D30 — O piso da RN0062 passou a reprovar
+A validação contava meses inteiros de forma inclusiva, então o mínimo de 1 mês nunca barrava
+nada. **Decisão:** comparar a distância entre as datas (`fim >= inicio.AddMonths(1)`), de modo
+que um intervalo de dez dias seja recusado como a regra manda.
+
+### D31 — Papel de cada endpoint segue o texto do requisito
+Endpoints marcados como "qualquer autenticado" onde o requisito nomeia o papel foram
+restringidos: reagendamento passa a ser do cliente ou do técnico (RF0053), e consulta de fatura,
+pagamentos e garantia passam a ser do cliente dono ou do administrador (RF0083, RF0085) — o
+técnico não tem assunto com fatura.
 
 ---
 

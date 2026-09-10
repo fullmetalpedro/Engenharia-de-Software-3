@@ -12,8 +12,7 @@ public sealed record AbrirChamadoCommand(
     Guid CategoriaServicoId,
     Guid TipoServicoId,
     string DescricaoProblema,
-    bool IndicacaoDeRisco,
-    Urgencia Urgencia = Urgencia.Media);
+    bool IndicacaoDeRisco);
 
 /// <summary>Arquivo recebido no upload, ja lido do formulario multipart.</summary>
 public sealed record ArquivoRecebido(
@@ -37,9 +36,7 @@ public sealed record FiltroDeChamados(
     Guid? ClienteId = null,
     DateTimeOffset? DataInicio = null,
     DateTimeOffset? DataFim = null,
-    long? Numero = null,
-    int? Page = null,
-    int? PageSize = null);
+    long? Numero = null);
 
 public sealed record AnexoDto(
     Guid Id,
@@ -109,7 +106,6 @@ public sealed class AbrirChamadoValidator : AbstractValidator<AbrirChamadoComman
         RuleFor(c => c.CategoriaServicoId).NotEmpty();
         RuleFor(c => c.TipoServicoId).NotEmpty();
         RuleFor(c => c.DescricaoProblema).NotEmpty().MaximumLength(2000);
-        RuleFor(c => c.Urgencia).IsInEnum();
     }
 }
 

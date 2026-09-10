@@ -6,7 +6,7 @@ identificadores passando de uma chamada para a outra.
 
 | Arquivo | O que é |
 |---|---|
-| `ChamadosManutencao.postman_collection.json` | a collection: 16 pastas, 112 requisições |
+| `ChamadosManutencao.postman_collection.json` | a collection: 15 pastas, 106 requisições |
 | `Chamados-local.postman_environment.json` | ambiente apontando para `http://localhost:5080` |
 | `gerar-collection.py` | regenera os dois a partir do OpenAPI da API |
 
@@ -14,20 +14,24 @@ identificadores passando de uma chamada para a outra.
 
 ## Começar
 
-1. Suba o ambiente e popule a base — passo a passo em [`../README.md`](../README.md):
+1. Suba o ambiente e crie o administrador — passo a passo em [`../README.md`](../README.md):
 
    ```bash
    docker compose up -d postgres
-   dotnet run --project src/ChamadosManutencao.Api -- seed
+   dotnet run --project src/ChamadosManutencao.Api -- criar-admin
    dotnet run --project src/ChamadosManutencao.Api
    ```
+
+   No ambiente do Postman, use em `emailAdministrador` e `senha` os mesmos valores que você
+   passou em `ADMIN_INICIAL_EMAIL` e `ADMIN_INICIAL_SENHA`.
 
 2. No Postman: **Import** → arraste os dois arquivos `.json`.
 
 3. Selecione o ambiente **Chamados - local** no canto superior direito.
 
-4. Abra a pasta **Começar aqui** e rode ela inteira (botão *Run folder*). Ela autentica e
-   carrega os identificadores do seed nas variáveis da collection.
+4. Abra a pasta **Começar aqui** e rode ela inteira (botão *Run folder*). Ela monta o cenário
+   do zero — categoria, tipo de serviço, técnico e cliente — e guarda os identificadores nas
+   variáveis da collection.
 
 Pronto. A partir daí, qualquer requisição das pastas UC01 a UC12 funciona sem você copiar
 GUID nenhum.
@@ -38,11 +42,10 @@ GUID nenhum.
 
 | Pasta | Para quê |
 |---|---|
-| **Começar aqui** | login e carga dos ids do seed. Rode primeiro. |
+| **Começar aqui** | login do administrador e criação do cenário. Rode primeiro. |
 | **Jornada completa** | o caminho feliz inteiro, em 18 passos, do catálogo à garantia. Roda de cima para baixo sem intervenção — é a demonstração do sistema. |
-| **Autenticação** | login, refresh e troca de senha |
+| **Autenticação** | login e troca de senha |
 | **UC01 a UC12** | um caso de uso por pasta, na ordem da matriz de rastreabilidade |
-| **Infraestrutura** | health check |
 
 ### Token por papel, automático
 
@@ -88,12 +91,12 @@ antes de enviar — o Postman não guarda o caminho no `.json` exportado.
 ## Duas armadilhas
 
 **`Autenticação > Troca a senha do usuário autenticado`** muda a senha de verdade. Se rodar com
-o token do administrador, o `Senha@123` do seed deixa de valer para ele e os próximos logins
-falham com 401. Para voltar ao estado inicial:
+o token do administrador, a senha do `criar-admin` deixa de valer e os próximos logins falham
+com 401. Para voltar ao estado inicial:
 
 ```bash
 docker compose down -v && docker compose up -d postgres
-dotnet run --project src/ChamadosManutencao.Api -- seed
+dotnet run --project src/ChamadosManutencao.Api -- criar-admin
 ```
 
 **Rodar a collection inteira de uma vez não funciona** — e não deveria. As pastas por caso de
@@ -115,7 +118,8 @@ newman run postman/ChamadosManutencao.postman_collection.json \
   --folder "Jornada completa"
 ```
 
-Saída esperada numa base recém-populada: **30 requisições, 30 asserções, 0 falhas**.
+Saída esperada numa base com o administrador criado: **30 requisições, 30 asserções, 0
+falhas**. A pasta monta o próprio cenário, então roda em base vazia.
 
 ---
 
@@ -133,6 +137,6 @@ python postman/gerar-collection.py /tmp/openapi.json \
 ```
 
 O gerador acrescenta ao que vem do OpenAPI aquilo que ele não sabe: qual papel cada endpoint
-exige (lido das políticas de autorização), os exemplos de corpo, os scripts de encadeamento, a
-pasta de bootstrap e a jornada completa. Ao mexer nas políticas de autorização da API, atualize
-o dicionário `POLITICA` no topo do gerador.
+exige, os exemplos de corpo, os scripts de encadeamento, a pasta de bootstrap e a jornada
+completa. Ao mexer nas políticas de autorização da API, atualize o dicionário `POLITICA` no topo
+do gerador — ele é lido do código-fonte dos endpoints, não do OpenAPI.

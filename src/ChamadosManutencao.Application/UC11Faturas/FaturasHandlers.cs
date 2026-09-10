@@ -17,9 +17,7 @@ public sealed record FiltroDeFaturas(
     DateTimeOffset? DataInicio = null,
     DateTimeOffset? DataFim = null,
     long? NumeroChamado = null,
-    Guid? ClienteId = null,
-    int? Page = null,
-    int? PageSize = null);
+    Guid? ClienteId = null);
 
 public sealed record FaturaDto(
     Guid Id,
@@ -66,7 +64,7 @@ public sealed class ConsultarFaturasHandler
         _usuarioAtual = usuarioAtual;
     }
 
-    public Task<ResultadoPaginado<FaturaDto>> MinhasFaturasAsync(
+    public Task<IReadOnlyCollection<FaturaDto>> MinhasFaturasAsync(
         FiltroDeFaturas filtro,
         CancellationToken cancellationToken = default)
     {
@@ -75,11 +73,10 @@ public sealed class ConsultarFaturasHandler
         return ConsultarAsync(filtro with { ClienteId = clienteId }, cancellationToken);
     }
 
-    public async Task<ResultadoPaginado<FaturaDto>> ConsultarAsync(
+    public async Task<IReadOnlyCollection<FaturaDto>> ConsultarAsync(
         FiltroDeFaturas filtro,
         CancellationToken cancellationToken = default)
     {
-        var paginacao = new ParametrosDePaginacao(filtro.Page, filtro.PageSize);
         var consulta = _leitura.Faturas;
 
         if (filtro.Status is not null)
@@ -108,12 +105,8 @@ public sealed class ConsultarFaturasHandler
                 .Any(c => c.Id == f.ChamadoId && c.Numero == filtro.NumeroChamado));
         }
 
-        var total = await consulta.LongCountAsync(cancellationToken);
-
         var itens = await consulta
             .OrderByDescending(f => f.DataEmissao)
-            .Skip(paginacao.QuantidadeParaPular())
-            .Take(paginacao.PageSize)
             .Select(f => new FaturaDto(
                 f.Id,
                 f.Numero,
@@ -130,7 +123,7 @@ public sealed class ConsultarFaturasHandler
                 f.Status))
             .ToListAsync(cancellationToken);
 
-        return new ResultadoPaginado<FaturaDto>(itens, paginacao.Page, paginacao.PageSize, total);
+        return itens;
     }
 
     public async Task<FaturaDto> ObterAsync(Guid faturaId, CancellationToken cancellationToken = default)

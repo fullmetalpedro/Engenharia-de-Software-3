@@ -34,9 +34,7 @@ public sealed record FiltroDeClientes(
     string? Email = null,
     string? Telefone = null,
     string? Codigo = null,
-    bool? Ativo = null,
-    int? Page = null,
-    int? PageSize = null);
+    bool? Ativo = null);
 
 public sealed record ImovelDto(
     Guid Id,

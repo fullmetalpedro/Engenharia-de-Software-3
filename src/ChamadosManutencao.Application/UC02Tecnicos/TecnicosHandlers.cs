@@ -121,11 +121,10 @@ public sealed class ConsultarTecnicosHandler
 
     public ConsultarTecnicosHandler(IContextoDeLeitura leitura) => _leitura = leitura;
 
-    public async Task<ResultadoPaginado<TecnicoResumoDto>> ExecutarAsync(
+    public async Task<IReadOnlyCollection<TecnicoResumoDto>> ExecutarAsync(
         FiltroDeTecnicos filtro,
         CancellationToken cancellationToken = default)
     {
-        var paginacao = new ParametrosDePaginacao(filtro.Page, filtro.PageSize);
         var consulta = _leitura.Tecnicos;
 
         if (!string.IsNullOrWhiteSpace(filtro.Nome))
@@ -165,12 +164,8 @@ public sealed class ConsultarTecnicosHandler
             consulta = consulta.Where(t => t.Ativo == filtro.Ativo);
         }
 
-        var total = await consulta.LongCountAsync(cancellationToken);
-
         var itens = await consulta
             .OrderBy(t => t.NomeCompleto)
-            .Skip(paginacao.QuantidadeParaPular())
-            .Take(paginacao.PageSize)
             .Select(t => new TecnicoResumoDto(
                 t.Id,
                 t.CodigoTecnico,
@@ -181,7 +176,7 @@ public sealed class ConsultarTecnicosHandler
                 t.Ativo))
             .ToListAsync(cancellationToken);
 
-        return new ResultadoPaginado<TecnicoResumoDto>(itens, paginacao.Page, paginacao.PageSize, total);
+        return itens;
     }
 }
 

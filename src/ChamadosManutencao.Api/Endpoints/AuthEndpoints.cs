@@ -27,13 +27,6 @@ public static class AuthEndpoints
             .WithSummary("Autentica o usuario e devolve o token JWT.")
             .WithDescription("Requisitos: RNF0022.");
 
-        grupo.MapPost("/refresh", async (
-                RefreshHandler handler,
-                CancellationToken cancellationToken) =>
-                Results.Ok(await handler.ExecutarAsync(cancellationToken)))
-            .RequireAuthorization()
-            .WithSummary("Reemite o token do usuario autenticado.");
-
         grupo.MapPost("/alterar-senha", async (
                 AlterarSenhaCommand comando,
                 AlterarSenhaHandler handler,

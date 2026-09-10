@@ -7,7 +7,7 @@ namespace ChamadosManutencao.Application.UC04Chamados;
 
 /// <summary>
 /// Consultas de chamado compartilhadas por UC04 (visao do cliente) e UC05 (visao do
-/// administrador). RNF0011: paginacao obrigatoria e projecao direta para DTO.
+/// administrador). RNF0011: projecao direta para DTO, sem materializar a entidade.
 /// </summary>
 public sealed class ConsultarChamadosHandler
 {
@@ -25,7 +25,7 @@ public sealed class ConsultarChamadosHandler
     /// Requisitos: RF0043, RNF0011.
     /// Caso de uso: UC04.
     /// </summary>
-    public Task<ResultadoPaginado<ChamadoResumoDto>> MeusChamadosAsync(
+    public Task<IReadOnlyCollection<ChamadoResumoDto>> MeusChamadosAsync(
         FiltroDeChamados filtro,
         CancellationToken cancellationToken = default)
     {
@@ -39,11 +39,10 @@ public sealed class ConsultarChamadosHandler
     /// Requisitos: RF0044, RNF0011.
     /// Caso de uso: UC05.
     /// </summary>
-    public async Task<ResultadoPaginado<ChamadoResumoDto>> ConsultarAsync(
+    public async Task<IReadOnlyCollection<ChamadoResumoDto>> ConsultarAsync(
         FiltroDeChamados filtro,
         CancellationToken cancellationToken = default)
     {
-        var paginacao = new ParametrosDePaginacao(filtro.Page, filtro.PageSize);
         var consulta = _leitura.Chamados;
 
         if (filtro.Status is not null)
@@ -87,12 +86,8 @@ public sealed class ConsultarChamadosHandler
             consulta = consulta.Where(c => c.Numero == filtro.Numero);
         }
 
-        var total = await consulta.LongCountAsync(cancellationToken);
-
         var itens = await consulta
             .OrderByDescending(c => c.DataHoraAbertura)
-            .Skip(paginacao.QuantidadeParaPular())
-            .Take(paginacao.PageSize)
             .Select(c => new ChamadoResumoDto(
                 c.Id,
                 c.Numero,
@@ -119,7 +114,7 @@ public sealed class ConsultarChamadosHandler
                         .FirstOrDefault()))
             .ToListAsync(cancellationToken);
 
-        return new ResultadoPaginado<ChamadoResumoDto>(itens, paginacao.Page, paginacao.PageSize, total);
+        return itens;
     }
 }
 

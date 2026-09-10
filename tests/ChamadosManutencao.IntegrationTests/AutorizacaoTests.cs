@@ -26,7 +26,6 @@ public class AutorizacaoTests : TesteDeIntegracao
         { "GET", "/api/v1/chamados/meus" },
         { "GET", "/api/v1/faturas" },
         { "GET", "/api/v1/faturas/minhas" },
-        { "POST", "/api/v1/auth/refresh" },
         { "POST", "/api/v1/tecnicos" },
         { "POST", "/api/v1/categorias-servico" },
         { "POST", "/api/v1/chamados" }
@@ -119,12 +118,10 @@ public class AutorizacaoTests : TesteDeIntegracao
         await resposta.DeveTerStatusAsync(HttpStatusCode.Unauthorized);
     }
 
-    /// <summary>Login, cadastro de cliente e health check continuam anonimos.</summary>
+    /// <summary>Login e cadastro de cliente continuam anonimos.</summary>
     [Fact]
     public async Task Rotas_anonimas_continuam_abertas()
     {
-        (await Anonimo.GetAsync("/health")).StatusCode.ShouldBe(HttpStatusCode.OK);
-
         // O cadastro de cliente responde sem token (o corpo invalido para em 400, nao em 401).
         var cadastro = await Anonimo.PostarAsync("/api/v1/clientes", new { });
         cadastro.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

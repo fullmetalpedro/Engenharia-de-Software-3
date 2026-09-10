@@ -55,7 +55,7 @@ Testcontainers).
 
 | Requisito | Caso de uso | Endpoint | Classe/método | Teste |
 |---|---|---|---|---|
-| RF0041 Abrir chamado | UC04, UC12 | `POST /chamados` | `AbrirChamadoHandler.ExecutarAsync`, `Chamado.Abrir` | `UC04ChamadosTests.Abertura_cria_chamado_aberto_com_numero_sequencial` |
+| RF0041 Abrir chamado | UC04, UC12 | `POST /chamados` | `AbrirChamadoHandler.ExecutarAsync`, `Chamado.Abrir` (quatro dados; urgência não é entrada) | `UC04ChamadosTests.Abertura_cria_chamado_aberto_com_numero_sequencial` |
 | RF0042 Anexar mídia | UC04 | `POST /chamados/{id}/anexos` | `AnexarMidiaAoChamadoHandler`, `Anexo.ParaChamado` | `UC04ChamadosTests.Sexto_anexo_do_chamado_e_recusado` |
 | RF0043 Consultar chamados (cliente) | UC04 | `GET /chamados/meus`, `GET /chamados/{id}` | `ConsultarChamadosHandler.MeusChamadosAsync`, `ObterChamadoHandler` | `UC04ChamadosTests.Cliente_consulta_somente_os_proprios_chamados` |
 | RF0044 Consultar chamados (administrador) | UC05 | `GET /chamados` | `ConsultarChamadosHandler.ConsultarAsync` | `UC05TriagemTests.Administrador_consulta_chamados_de_todos_os_clientes` |
@@ -72,7 +72,7 @@ Testcontainers).
 |---|---|---|---|---|
 | RF0051 Agendar atendimento | UC06 | `POST /chamados/{id}/agendamentos`, `GET .../agendamentos` | `AgendarAtendimentoHandler`, `Chamado.AdicionarAgendamento` | `UC06AgendamentoTests.Tecnico_propoe_agendamento_e_o_chamado_fica_agendado` |
 | RF0052 Confirmar agendamento | UC06 | `POST /agendamentos/{id}/confirmacao` | `ConfirmarAgendamentoHandler`, `Agendamento.Confirmar` | `UC06AgendamentoTests.Cliente_confirma_o_agendamento_proposto` |
-| RF0053 Reagendar atendimento | UC06 | `POST /agendamentos/{id}/reagendamento` | `ReagendarAtendimentoHandler` | `UC06AgendamentoTests.Reagendamento_substitui_o_agendamento_anterior` |
+| RF0053 Reagendar atendimento | UC06 | `POST /agendamentos/{id}/reagendamento` (cliente ou técnico) | `ReagendarAtendimentoHandler` | `UC06AgendamentoTests.Reagendamento_substitui_o_agendamento_anterior` |
 | RF0054 Registrar início | UC07 | `POST /chamados/{id}/atendimento` | `IniciarAtendimentoHandler`, `Chamado.RegistrarInicioDeAtendimento` | `UC07AtendimentoTests.Inicio_do_atendimento_muda_o_status_do_chamado` |
 | RF0055 Registrar orçamento | UC07 | `POST /atendimentos/{id}/orcamento`, `GET .../orcamento` | `RegistrarOrcamentoHandler`, `Orcamento` | `UC07AtendimentoTests.Orcamento_registrado_fica_pendente_com_prazo_de_48_horas` |
 | RF0056 Aprovar orçamento | UC07 | `POST /orcamentos/{id}/decisao` | `DecidirOrcamentoHandler`, `Orcamento.Aprovar/Recusar` | `UC07AtendimentoTests.Cliente_aprova_o_orcamento` |
@@ -111,7 +111,7 @@ Testcontainers).
 | RN0021 Dados obrigatórios do técnico | UC02 | `POST /tecnicos` | `Tecnico` (construtor), `CadastrarTecnicoValidator` | `RN0021TecnicoTests`, `UC02TecnicosTests.Cadastro_sem_especialidade_e_recusado` |
 | RN0022 Especialidade na atribuição | UC05, UC12 | `POST/PUT /chamados/{id}/atribuicao` | `Tecnico.AtendeCategoria` via `Chamado.AtribuirTecnico` | `RN0022EspecialidadeTests`, `UC05TriagemTests.Atribuicao_a_tecnico_sem_a_especialidade_e_recusada` |
 | RN0023 Área na atribuição | UC05, UC12 | `POST/PUT /chamados/{id}/atribuicao` | `Tecnico.AtendeCep` via `Chamado.AtribuirTecnico` | `RN0023AreaAtendimentoTests`, `UC05TriagemTests.Atribuicao_a_tecnico_fora_da_area_e_recusada` |
-| RN0031 Prioridade automática por categoria | UC04, UC05 | `POST /chamados` | `PoliticaUrgencia.Definir` | `RN0031PoliticaUrgenciaTests`, `UC04ChamadosTests.Indicacao_de_risco_em_categoria_de_risco_forca_urgencia_alta` |
+| RN0031 Prioridade automática por categoria | UC04, UC05 | `POST /chamados` | `PoliticaUrgencia.Definir` (padrão `Media`, `Alta` com risco) | `RN0031PoliticaUrgenciaTests`, `UC04ChamadosTests.Indicacao_de_risco_em_categoria_de_risco_forca_urgencia_alta` |
 | RN0032 Foto obrigatória | UC04 | `POST /chamados` | `AbrirChamadoHandler` (consulta `CategoriaServico.ExigeFoto`) | `RN0032FotoObrigatoriaTests`, `UC04ChamadosTests.Categoria_que_exige_foto_recusa_abertura_sem_anexo` |
 | RN0033 Regra de cancelamento | UC04, UC05 | `POST /chamados/{id}/cancelamento` | `Chamado.PodeSerCancelado`, `.Cancelar` | `RN0033CancelamentoTests`, `UC04ChamadosTests.Cliente_nao_cancela_chamado_em_atendimento` |
 | RN0034 Fluxo de status | UC04, UC05, UC06, UC07 | todos os que mudam status | `MaquinaDeEstadosDoChamado`, `Chamado.AlterarStatus` | `RN0034MaquinaDeEstadosTests` (teste parametrizado), `UC05TriagemTests.Transicao_de_status_invalida_e_recusada` |
@@ -122,7 +122,7 @@ Testcontainers).
 | RN0051 Solicitação de avaliação | UC07, UC08 | efeito de `POST /atendimentos/{id}/conclusao` | evento `AtendimentoConcluido` → `INotificador.SolicitarAvaliacaoAsync` | `RN0051SolicitacaoDeAvaliacaoTests`, `JornadaCompletaTests.Cada_mudanca_de_status_gera_notificacao_ao_cliente` |
 | RN0052 Prazo de avaliação | UC08 | `POST /chamados/{id}/avaliacao` | `Avaliacao.DentroDoPrazo`, `RegistrarAvaliacaoHandler` | `RN0052PrazoDeAvaliacaoTests`, `UC08AvaliacaoTests.Avaliacao_fora_do_prazo_de_15_dias_e_recusada` |
 | RN0061 Granularidade mensal | UC09 | `GET /analises/chamados` | `AnalisarChamadosHandler` (agrupamento por ano/mês) | `UC09AnaliseTests.Analise_agrupa_por_mes_e_devolve_uma_serie_por_categoria` |
-| RN0062 Intervalo de 1 a 24 meses | UC09 | `GET /analises/chamados` | `FiltroDeAnaliseValidator` | `UC09AnaliseTests.Intervalo_maior_que_24_meses_e_recusado`, `.Intervalo_de_24_meses_e_aceito` |
+| RN0062 Intervalo de 1 a 24 meses | UC09 | `GET /analises/chamados` | `FiltroDeAnaliseValidator` (piso e teto pela distância entre as datas) | `UC09AnaliseTests.Intervalo_maior_que_24_meses_e_recusado`, `.Intervalo_de_24_meses_e_aceito` |
 | RN0063 Cancelados fora da análise | UC09 | `GET /analises/chamados` | `AnalisarChamadosHandler` (filtro de status) | `UC09AnaliseTests.Chamado_cancelado_nao_e_contabilizado` |
 | RN0071 Composição da fatura | UC11, UC12 | efeito de `POST /atendimentos/{id}/conclusao` | `Fatura.CalcularValorTotal`, `ConcluirAtendimentoHandler.GerarFaturaAsync` | `RN0071ComposicaoDaFaturaTests`, `UC12GarantiaTests.Chamado_de_garantia_nao_gera_fatura` |
 | RN0072 Prazo e condições da garantia | UC12 | `POST /atendimentos/{id}/garantia/acionamento` | `Garantia.PodeSerAcionada`, `AcionarGarantiaHandler` | `RN0072GarantiaTests`, `UC12GarantiaTests.Acionamento_fora_do_prazo_de_90_dias_e_recusado`, `.Acionamento_com_fatura_em_aberto_e_recusado` |
@@ -133,7 +133,7 @@ Testcontainers).
 
 | Requisito | Caso de uso | Endpoint | Classe/método | Teste |
 |---|---|---|---|---|
-| RNF0011 Resposta em até 1 s | todos | todas as consultas | `MiddlewareDeTempoDeResposta`, `ParametrosDePaginacao`, `ContextoDeLeitura` (AsNoTracking), índices da migration | `RNF0011TempoDeRespostaTests` (limite, paginação obrigatória e teto de 100) |
+| RNF0011 Resposta em até 1 s | todos | todas as consultas | `MiddlewareDeTempoDeResposta` (log acima de 1 s), `ContextoDeLeitura` (AsNoTracking), índices da migration | `RNF0011TempoDeRespostaTests` |
 | RNF0012 Log de transação | todos | toda escrita | `InterceptorDeAuditoria` → tabela `log_transacao` | `JornadaCompletaTests` (conta as linhas de `log_transacao` geradas pela jornada) |
 | RNF0021 Senha forte | UC01 | `POST /clientes`, `POST /auth/alterar-senha` | `PoliticaDeSenhaForte` | `UC01ClientesTests.Cadastro_recusa_senha_fora_da_politica`, `AutenticacaoTests.Alterar_senha_recusa_senha_fraca` |
 | RNF0022 Senha criptografada | UC01 | `POST /auth/login` | `ServicoDeHashBCrypt` (work factor 12), `Usuario.Autenticar` | `RNF0022AutenticacaoTests`, `AutenticacaoTests.Nenhuma_resposta_expoe_a_senha_ou_o_hash` |
@@ -142,7 +142,7 @@ Testcontainers).
 | RNF0032 Anexo de documentação | UC02 | `POST /tecnicos/{id}/documentos` | `Anexo.ParaTecnico` (PDF, PNG, JPEG) | `RNF0032DocumentoDoTecnicoTests`, `UC02TecnicosTests.Documento_em_pdf_e_aceito_e_docx_e_recusado` |
 | RNF0041 Notificação de mudança de status | UC04, UC05, UC06, UC07, UC12 | todos que mudam status | evento `StatusDoChamadoAlterado` → `DespachanteDeEventos` → `NotificadorPorLog` (`notificacao_enviada`) | `JornadaCompletaTests.Cada_mudanca_de_status_gera_notificacao_ao_cliente` |
 | RNF0042 Número único de chamado | UC04, UC12 | `POST /chamados` | `GeradorDeSequencias.ProximoNumeroDeChamadoAsync` (`seq_numero_chamado`) | `UC04ChamadosTests.Abertura_cria_chamado_aberto_com_numero_sequencial` |
-| RNF0043 Limite de anexos | UC04, UC07 | `POST /chamados`, `.../anexos`, `.../conclusao` | `Chamado.AdicionarAnexo`, `Anexo.TamanhoMaximoEmBytes` | `RNF0043LimiteDeAnexosTests`, `UC04ChamadosTests.Sexto_anexo_do_chamado_e_recusado` |
+| RNF0043 Limite de anexos | UC04, UC07 | `POST /chamados`, `.../anexos`, `.../conclusao` | `Chamado.AdicionarAnexo` (5 por chamado), `Anexo.TamanhoMaximoEmBytes` | `RNF0043LimiteDeAnexosTests`, `UC04ChamadosTests.Sexto_anexo_do_chamado_e_recusado` |
 | RNF0051 Gráfico de linhas | UC09 | `GET /analises/chamados` | `AnaliseDeChamadosDto` (eixo X, séries e legendas prontas) | `UC09AnaliseTests.Analise_agrupa_por_mes_e_devolve_uma_serie_por_categoria` |
 | RNF0061 Tokenização do cartão | UC10, UC11 | `POST /clientes/{id}/formas-pagamento`, `POST /faturas/{id}/pagamentos` | `IGatewayPagamento.TokenizarCartaoAsync`, `CartaoCredito` | `UC10FormasPagamentoTests.Cartao_e_tokenizado_e_o_numero_completo_nao_volta_na_resposta`, `.Numero_completo_do_cartao_nao_e_persistido` |
 

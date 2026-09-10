@@ -37,9 +37,7 @@ public sealed record FiltroDeTecnicos(
     Guid? EspecialidadeId = null,
     string? Bairro = null,
     string? Cep = null,
-    bool? Ativo = null,
-    int? Page = null,
-    int? PageSize = null);
+    bool? Ativo = null);
 
 public sealed record EspecialidadeDto(Guid Id, string Nome);
 

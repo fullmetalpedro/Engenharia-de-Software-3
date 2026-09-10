@@ -60,25 +60,6 @@ public class AutenticacaoTests : TesteDeIntegracao
         await resposta.DeveTerStatusAsync(HttpStatusCode.Unauthorized);
     }
 
-    [Fact]
-    public async Task Refresh_reemite_o_token_do_usuario_autenticado()
-    {
-        var cliente = await CadastrarClienteAsync();
-
-        var token = await (await cliente.Http.PostarAsync("/api/v1/auth/refresh"))
-            .LerAsync<TokenResponse>();
-
-        token.Papel.ShouldBe("Cliente");
-    }
-
-    [Fact]
-    public async Task Refresh_sem_token_devolve_401()
-    {
-        var resposta = await Anonimo.PostarAsync("/api/v1/auth/refresh");
-
-        await resposta.DeveTerStatusAsync(HttpStatusCode.Unauthorized);
-    }
-
     /// <summary>RNF0021: a politica de senha forte tambem vale para a troca.</summary>
     [Fact]
     public async Task Alterar_senha_recusa_senha_fraca()

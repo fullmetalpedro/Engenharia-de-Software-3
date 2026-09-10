@@ -70,9 +70,7 @@ public static class UC04ChamadosEndpoints
                 Guid? categoriaId = null,
                 DateTimeOffset? dataInicio = null,
                 DateTimeOffset? dataFim = null,
-                long? numero = null,
-                int? page = null,
-                int? pageSize = null) =>
+                long? numero = null) =>
                 Results.Ok(await handler.MeusChamadosAsync(
                     new FiltroDeChamados(
                         status,
@@ -82,9 +80,7 @@ public static class UC04ChamadosEndpoints
                         ClienteId: null,
                         dataInicio,
                         dataFim,
-                        numero,
-                        page,
-                        pageSize),
+                        numero),
                     cancellationToken)))
             .RequireAuthorization(Politicas.Cliente)
             .WithSummary("Consulta os chamados do cliente autenticado.")

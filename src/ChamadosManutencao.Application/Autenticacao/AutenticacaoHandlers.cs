@@ -73,47 +73,6 @@ public sealed class LoginHandler
 }
 
 /// <summary>
-/// Reemite o token do usuario autenticado (decisao D14: sem entidade de refresh token).
-/// Caso de uso: transversal (autenticacao).
-/// </summary>
-public sealed class RefreshHandler
-{
-    private readonly IUsuarioRepositorio _usuarios;
-    private readonly IUsuarioAtual _usuarioAtual;
-    private readonly IGeradorDeToken _token;
-
-    public RefreshHandler(
-        IUsuarioRepositorio usuarios,
-        IUsuarioAtual usuarioAtual,
-        IGeradorDeToken token)
-    {
-        _usuarios = usuarios;
-        _usuarioAtual = usuarioAtual;
-        _token = token;
-    }
-
-    public async Task<TokenResponse> ExecutarAsync(CancellationToken cancellationToken = default)
-    {
-        if (!_usuarioAtual.EstaAutenticado || _usuarioAtual.Id is null)
-        {
-            throw new AcessoNegadoException("Usuario nao autenticado.");
-        }
-
-        var usuario = await _usuarios.ObterPorIdAsync(_usuarioAtual.Id.Value, cancellationToken)
-            ?? throw new RecursoNaoEncontradoException("Usuario", _usuarioAtual.Id.Value);
-
-        if (!usuario.Ativo)
-        {
-            throw new AcessoNegadoException("Usuario inativo.");
-        }
-
-        var emitido = _token.Emitir(usuario);
-
-        return new TokenResponse(emitido.AccessToken, emitido.ExpiraEm, emitido.Papel);
-    }
-}
-
-/// <summary>
 /// Troca a senha do usuario autenticado.
 /// Requisitos: RNF0021, RNF0022.
 /// Caso de uso: transversal (autenticacao).

@@ -4,7 +4,6 @@ namespace ChamadosManutencao.Api.Middlewares;
 
 /// <summary>
 /// RNF0011: mede a duracao de cada requisicao e emite log Warning acima de 1000 ms.
-/// O tempo tambem vai no cabecalho X-Tempo-De-Resposta-Ms, o que ajuda no diagnostico.
 /// </summary>
 public sealed class MiddlewareDeTempoDeResposta
 {
@@ -22,13 +21,6 @@ public sealed class MiddlewareDeTempoDeResposta
     public async Task InvokeAsync(HttpContext contexto)
     {
         var cronometro = Stopwatch.StartNew();
-
-        contexto.Response.OnStarting(() =>
-        {
-            contexto.Response.Headers["X-Tempo-De-Resposta-Ms"] =
-                cronometro.ElapsedMilliseconds.ToString();
-            return Task.CompletedTask;
-        });
 
         await _proximo(contexto);
 

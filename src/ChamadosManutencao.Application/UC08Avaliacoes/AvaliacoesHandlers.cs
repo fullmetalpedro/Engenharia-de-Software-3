@@ -158,22 +158,15 @@ public sealed class ConsultarAvaliacoesDoTecnicoHandler
 
     public ConsultarAvaliacoesDoTecnicoHandler(IContextoDeLeitura leitura) => _leitura = leitura;
 
-    public async Task<ResultadoPaginado<AvaliacaoDto>> ExecutarAsync(
+    public async Task<IReadOnlyCollection<AvaliacaoDto>> ExecutarAsync(
         Guid tecnicoId,
-        int? page,
-        int? pageSize,
         CancellationToken cancellationToken = default)
     {
-        var paginacao = new ParametrosDePaginacao(page, pageSize);
 
         var consulta = _leitura.Avaliacoes.Where(a => a.TecnicoId == tecnicoId);
 
-        var total = await consulta.LongCountAsync(cancellationToken);
-
         var itens = await consulta
             .OrderByDescending(a => a.DataHoraRegistro)
-            .Skip(paginacao.QuantidadeParaPular())
-            .Take(paginacao.PageSize)
             .Select(a => new AvaliacaoDto(
                 a.Id,
                 a.ChamadoId,
@@ -193,7 +186,7 @@ public sealed class ConsultarAvaliacoesDoTecnicoHandler
                     .FirstOrDefault()))
             .ToListAsync(cancellationToken);
 
-        return new ResultadoPaginado<AvaliacaoDto>(itens, paginacao.Page, paginacao.PageSize, total);
+        return itens;
     }
 }
 

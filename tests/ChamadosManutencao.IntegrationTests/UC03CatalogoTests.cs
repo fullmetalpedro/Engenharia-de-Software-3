@@ -90,14 +90,14 @@ public class UC03CatalogoTests : TesteDeIntegracao
         var cliente = await CadastrarClienteAsync();
 
         var categorias = await (await cliente.Http.GetAsync("/api/v1/categorias-servico"))
-            .LerAsync<ResultadoPaginado<CategoriaDto>>();
+            .LerAsync<IReadOnlyCollection<CategoriaDto>>();
 
-        categorias.Total.ShouldBeGreaterThanOrEqualTo(1);
+        categorias.Count.ShouldBeGreaterThanOrEqualTo(1);
 
         var tipos = await (await cliente.Http.GetAsync($"/api/v1/tipos-servico?categoriaId={categoria.Id}"))
-            .LerAsync<ResultadoPaginado<TipoServicoDto>>();
+            .LerAsync<IReadOnlyCollection<TipoServicoDto>>();
 
-        tipos.Itens.ShouldAllBe(t => t.CategoriaServicoId == categoria.Id);
+        tipos.ShouldAllBe(t => t.CategoriaServicoId == categoria.Id);
     }
 
     [Fact]

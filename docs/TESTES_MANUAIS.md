@@ -6,9 +6,15 @@ mão e a resposta conferida.
 
 Ambiente da execução registrada aqui:
 
-- base recriada do zero e populada com `dotnet run --project src/ChamadosManutencao.Api -- seed`
-- API em `Development`, jobs ligados
-- senha de todos os usuários do seed: `Senha@123`
+- base recriada do zero, com o administrador criado por
+  `dotnet run --project src/ChamadosManutencao.Api -- criar-admin`
+- catálogo, técnico e cliente criados pela própria API, na ordem da Parte 2 do
+  [`README`](../README.md)
+- API em `Development`, job de expiração de orçamento ligado
+- senha usada em todos os cadastros: `Senha@123`
+
+> Os cenários abaixo foram observados em duas rodadas: a maior parte na primeira, e os marcados
+> com **(reverificado)** depois do alinhamento aos requisitos, quando o comportamento mudou.
 
 Preparação comum a todos os blocos:
 
@@ -61,7 +67,7 @@ curl -s -X POST $BASE/auth/login -H 'Content-Type: application/json' \
 | 13 | Adicionar segundo imóvel | RF0016 | 201 | ✅ 2 imóveis |
 | 14 | Imóvel com CEP inválido | RN0012 | 400 | ✅ "O CEP deve conter 8 digitos" |
 | 15 | Remover imóvel quando há outro | RF0016 | 204 | ✅ |
-| 16 | Remover o último imóvel | RN0011 | 422 | ✅ `requisito: RN0011` |
+| 16 | Remover o último imóvel | RN0011 | 422 | ✅ 422 |
 
 ---
 
@@ -100,14 +106,14 @@ curl -s -X POST $BASE/auth/login -H 'Content-Type: application/json' \
 
 | # | Cenário | Requisito | Esperado | Resultado |
 |---|---|---|---|---|
-| 34 | Abertura sem foto em categoria que exige | RN0032 | recusada | ✅ 409, `requisito: RN0032` |
+| 34 | Abertura sem foto em categoria que exige | RN0032 | recusada | ✅ 409 |
 | 35 | Abertura com foto (multipart) | RF0041, RF0042, RN0032 | 201 | ✅ chamado nº 41 |
 | 36 | Número sequencial | RNF0042 | incrementa | ✅ 41 → 42 → 43 → 44 |
-| 37 | Categoria sem risco + indicação de risco | RN0031 | mantém a urgência informada | ✅ `Baixa` |
-| 38 | Sexto anexo do mesmo chamado | RNF0043 | recusado | ✅ 5 aceitos (a foto da abertura conta), 6º = 422 |
+| 37 | Abertura não aceita urgência do cliente | RF0041, RF0046 | nasce `Media`; só sobe sozinha na categoria de risco | ✅ **(reverificado)** enviei `"urgencia":"Alta"` no corpo e o chamado nasceu `Media` |
+| 38 | Sexto anexo do mesmo chamado | RNF0043 | recusado | ✅ **(reverificado)** 5 aceitos, 6º = 422. A cota é do chamado, somando abertura e conclusão |
 | 39 | Cliente lista só os próprios chamados | RF0043 | 10 chamados da Ana | ✅ |
 | 40 | Cancelar chamado ABERTO | RF0045, RN0033 | 204 | ✅ status vira `Cancelado` |
-| 41 | Cancelar chamado EM ATENDIMENTO | RN0033 | recusado | ✅ 422, `requisito: RN0033` |
+| 41 | Cancelar chamado EM ATENDIMENTO | RN0033 | recusado | ✅ 422 |
 | 42 | Histórico de status | RF0050 | uma linha por transição, com hora e observação | ✅ 5 linhas de `Aberto` a `Concluido` |
 | 43 | Reabertura dentro de 7 dias | RN0035 | volta para EM ANÁLISE | ✅ 204, status `EmAnalise` |
 
@@ -126,11 +132,11 @@ curl -s -X POST $BASE/chamados -H "$CLIENTE" \
 
 | # | Cenário | Requisito | Esperado | Resultado |
 |---|---|---|---|---|
-| 44 | Administrador lista todos os chamados | RF0044 | 40 do seed, filtráveis por status | ✅ 6/5/6/4/15/4 por status |
+| 44 | Administrador lista todos os chamados | RF0044 | lista completa, filtrável por status | ✅ |
 | 45 | Classificar urgência | RF0046 | 204 | ✅ virou `Alta` |
 | 46 | Atribuir técnico | RF0047 | 204, chamado vai para EM ANÁLISE | ✅ |
-| 47 | Atribuir técnico sem a especialidade | RN0022 | 422 | ✅ `requisito: RN0022` |
-| 48 | Atribuir técnico fora da área | RN0023 | 422 | ✅ `requisito: RN0023` |
+| 47 | Atribuir técnico sem a especialidade | RN0022 | 422 | ✅ 422 |
+| 48 | Atribuir técnico fora da área | RN0023 | 422 | ✅ 422 |
 | 49 | Reatribuir a técnico habilitado | RF0048 | 204 | ✅ técnico trocado |
 | 50 | Alterar status manualmente | RF0049 | 204 | ✅ `Aberto` → `EmAnalise` |
 | 51 | Transição inválida | RN0034 | 422 | ✅ "EmAnalise nao pode ir para Concluido" |
@@ -145,7 +151,7 @@ curl -s -X POST $BASE/chamados -H "$CLIENTE" \
 | 53 | Técnico propõe horário | RF0051 | 201, `origemProposta: Tecnico`, chamado AGENDADO | ✅ |
 | 54 | Cliente confirma | RF0052 | 200, `dataHoraConfirmacao` preenchida | ✅ |
 | 55 | Reagendamento pelo cliente | RF0053 | novo agendamento; o anterior vira REAGENDADO | ✅ 3 agendamentos, 2 `Reagendado` + 1 `Proposto` |
-| 56 | Janela sobreposta do mesmo técnico | RN0041 | recusada | ✅ 409, `requisito: RN0041` |
+| 56 | Janela sobreposta do mesmo técnico | RN0041 | recusada | ✅ 409 |
 | 57 | Agendar chamado sem técnico | RF0051 | recusado | ✅ 409 |
 
 ---
@@ -156,7 +162,7 @@ curl -s -X POST $BASE/chamados -H "$CLIENTE" \
 |---|---|---|---|---|
 | 58 | Técnico inicia atendimento | RF0054 | 201, chamado EM ATENDIMENTO | ✅ |
 | 59 | Registrar orçamento | RF0055, RN0043 | pendente, prazo de 48 h | ✅ 90 + 150 = 240; prazo em +2 dias |
-| 60 | Concluir com orçamento pendente | RN0043 | recusado | ✅ 422, `requisito: RN0043` |
+| 60 | Concluir com orçamento pendente | RN0043 | recusado | ✅ 422 |
 | 61 | Cliente aprova | RF0056 | 200 | ✅ |
 | 62 | Cliente recusa sem pedir novo | RN0042 | chamado cancelado | ✅ status `Cancelado` |
 | 63 | Conclusão com foto | RF0057 | 200, garantia de 90 dias | ✅ `prazoDias: 90`, `vigente: true` |
@@ -184,6 +190,7 @@ curl -s -X POST $BASE/chamados -H "$CLIENTE" \
 | 71 | Série mensal por categoria | RF0071, RN0061, RNF0051 | eixo X mês/ano, uma série por categoria | ✅ 13 colunas `2025-09`…`2026-09`, séries Eletrica (30) e Hidraulica (9) |
 | 72 | Cancelados fora da contagem | RN0063 | total ignora CANCELADO | ✅ 43 chamados − 4 cancelados = 39 |
 | 73 | Intervalo de 25 meses | RN0062 | 400 | ✅ "no minimo 1 e no maximo 24 meses" |
+| 73b | Intervalo de 10 dias | RN0062 | 400 | ✅ **(reverificado)** o piso de 1 mês passou a reprovar de fato |
 | 74 | Exportação | RF0074 | CSV com `Content-Disposition` | ✅ `text/csv`, `analise-chamados-202509-202609.csv` |
 | 75 | Cliente tentando abrir a análise | — | 403 | ✅ |
 
@@ -241,17 +248,13 @@ docker exec chamados_postgres psql -U chamados -d chamados -tAc \
 | # | Cenário | Requisito | Esperado | Resultado |
 |---|---|---|---|---|
 | 87 | Tempo de resposta das consultas | RNF0011 | ≤ 1000 ms | ✅ 16 a 47 ms nas seis consultas medidas |
+| 87b | Rotas sem requisito foram removidas | — | 404 | ✅ **(reverificado)** `/health` e `/auth/refresh` respondem 404; `/scalar` também |
 | 88 | Toda escrita no log de transação | RNF0012 | data, hora, usuário, entidade, antes e depois | ✅ 451 registros |
 | 89 | Senha e token do cartão no log | RNF0022, RNF0061 | mascarados | ✅ gravados como `"***"` |
 | 90 | Notificação a cada mudança de status | RNF0041 | uma por transição | ✅ inclusive "Avalie o atendimento" (RN0051) e "Fatura vencida" |
-| 91 | Documentação OpenAPI | — | servida e agrupada por UC | ✅ 68 operações, UC01 a UC12 |
+| 91 | Documentação OpenAPI no Swagger UI | — | servida e agrupada por UC | ✅ **(reverificado)** `/swagger` 200, 66 operações, UC01 a UC12 |
 
-O cabeçalho de tempo vem em toda resposta:
-
-```bash
-curl -s -D- -o /dev/null -H "$ADMIN" $BASE/chamados | grep -i X-Tempo-De-Resposta-Ms
-# X-Tempo-De-Resposta-Ms: 47
-```
+O tempo é medido do lado de quem chama; a API registra log de aviso quando passa de 1000 ms.
 
 ---
 
@@ -304,11 +307,9 @@ exceção carrega:
 
 ## Não verificado
 
-- **Renderização do Scalar no navegador.** O documento OpenAPI e a página HTML são servidos
-  corretamente (HTTP 200, título `Chamados de Manutencao`, 68 operações), mas a automação de
+- **Renderização do Swagger UI no navegador.** A página e o documento OpenAPI são servidos
+  corretamente (HTTP 200, título `Chamados de Manutencao`, 66 operações), mas a automação de
   navegador desta sessão não conseguiu carregar `localhost`. Abra
-  `http://localhost:5080/scalar/` manualmente para conferir o visual.
-- **RN0062, piso de 1 mês.** O validador conta meses inteiros de forma inclusiva
-  (`fim.Month - inicio.Month + 1`), então qualquer intervalo válido resulta em no mínimo 1 e o
-  piso nunca reprova nada. Só o teto de 24 meses e `fim < inicio` reprovam. Se a intenção da
-  regra era exigir 30 dias corridos, o validador precisa mudar.
+  `http://localhost:5080/swagger` manualmente para conferir o visual.
+- ~~**RN0062, piso de 1 mês.**~~ Corrigido: o validador passou a comparar a distância entre as
+  duas datas (`fim >= inicio.AddMonths(1)`), então um intervalo de dez dias é recusado.

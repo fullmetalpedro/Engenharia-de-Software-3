@@ -37,7 +37,7 @@ public static class UC12GarantiaEndpoints
                 ConsultarGarantiaHandler handler,
                 CancellationToken cancellationToken) =>
                 Results.Ok(await handler.ExecutarAsync(id, cancellationToken)))
-            .RequireAuthorization()
+            .RequireAuthorization(Politicas.ClienteOuAdministrador)
             .WithSummary("Consulta a garantia do atendimento.")
             .WithDescription("Requisitos: RF0085, RN0072.");
 

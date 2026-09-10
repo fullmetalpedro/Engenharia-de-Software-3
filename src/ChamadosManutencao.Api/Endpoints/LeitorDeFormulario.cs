@@ -1,6 +1,5 @@
 using ChamadosManutencao.Application.Common;
 using ChamadosManutencao.Application.UC04Chamados;
-using ChamadosManutencao.Domain.Enums;
 
 namespace ChamadosManutencao.Api.Endpoints;
 
@@ -33,8 +32,7 @@ public static class LeitorDeFormulario
             LerGuid(formulario, "categoriaServicoId"),
             LerGuid(formulario, "tipoServicoId"),
             formulario["descricaoProblema"].ToString(),
-            LerBool(formulario, "indicacaoDeRisco"),
-            LerUrgencia(formulario, "urgencia"));
+            LerBool(formulario, "indicacaoDeRisco"));
 
         return (comando, LerArquivos(formulario));
     }
@@ -59,13 +57,4 @@ public static class LeitorDeFormulario
 
     private static bool LerBool(IFormCollection formulario, string campo) =>
         bool.TryParse(formulario[campo].ToString(), out var valor) && valor;
-
-    private static Urgencia LerUrgencia(IFormCollection formulario, string campo)
-    {
-        var texto = formulario[campo].ToString();
-
-        return Enum.TryParse<Urgencia>(texto, ignoreCase: true, out var urgencia)
-            ? urgencia
-            : Urgencia.Media;
-    }
 }

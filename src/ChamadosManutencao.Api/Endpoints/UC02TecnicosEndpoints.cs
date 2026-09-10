@@ -38,11 +38,9 @@ public static class UC02TecnicosEndpoints
                 Guid? especialidadeId = null,
                 string? bairro = null,
                 string? cep = null,
-                bool? ativo = null,
-                int? page = null,
-                int? pageSize = null) =>
+                bool? ativo = null) =>
                 Results.Ok(await handler.ExecutarAsync(
-                    new FiltroDeTecnicos(nome, cpf, especialidadeId, bairro, cep, ativo, page, pageSize),
+                    new FiltroDeTecnicos(nome, cpf, especialidadeId, bairro, cep, ativo),
                     cancellationToken)))
             .RequireAuthorization(Politicas.Administrador)
             .WithSummary("Consulta tecnicos por filtro, incluindo especialidade e area.")
@@ -143,10 +141,8 @@ public static class UC02TecnicosEndpoints
         grupo.MapGet("/{id:guid}/avaliacoes", async (
                 Guid id,
                 ConsultarAvaliacoesDoTecnicoHandler handler,
-                CancellationToken cancellationToken,
-                int? page = null,
-                int? pageSize = null) =>
-                Results.Ok(await handler.ExecutarAsync(id, page, pageSize, cancellationToken)))
+                CancellationToken cancellationToken) =>
+                Results.Ok(await handler.ExecutarAsync(id, cancellationToken)))
             .RequireAuthorization()
             .WithSummary("Consulta as avaliacoes recebidas pelo tecnico.")
             .WithDescription("Requisitos: RF0062. Decisao D16: qualquer usuario autenticado.");

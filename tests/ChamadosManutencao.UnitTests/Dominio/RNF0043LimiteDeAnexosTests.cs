@@ -55,19 +55,28 @@ public class RNF0043LimiteDeAnexosTests
         chamado.Anexos.Count.ShouldBe(5);
     }
 
+    /// <summary>
+    /// RNF0043 fala em cinco arquivos por chamado, sem separar por momento: as fotos da
+    /// conclusao dividem a mesma cota da abertura.
+    /// </summary>
     [Fact]
-    public void Fotos_da_conclusao_tem_cota_propria()
+    public void Fotos_da_conclusao_dividem_a_cota_do_chamado()
     {
         var chamado = Construtor.Chamado();
 
-        for (var i = 1; i <= 5; i++)
+        for (var i = 1; i <= 4; i++)
         {
             chamado.AdicionarAnexo(Midia(chamado.Id, i, OrigemAnexo.ChamadoAbertura));
         }
 
         chamado.AdicionarAnexo(Midia(chamado.Id, 10, OrigemAnexo.ConclusaoAtendimento));
+        chamado.Anexos.Count.ShouldBe(5);
 
-        chamado.Anexos.Count.ShouldBe(6);
+        var excecao = Should.Throw<ExcecaoDeDominio>(() =>
+            chamado.AdicionarAnexo(Midia(chamado.Id, 11, OrigemAnexo.ConclusaoAtendimento)));
+
+        excecao.Requisito.ShouldBe("RNF0043");
+        chamado.Anexos.Count.ShouldBe(5);
     }
 
     [Fact]

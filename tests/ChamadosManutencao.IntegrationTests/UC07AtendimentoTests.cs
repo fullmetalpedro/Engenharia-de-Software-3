@@ -155,7 +155,6 @@ public class UC07AtendimentoTests : TesteDeIntegracao
             new ConcluirAtendimentoCommand("Tentativa de conclusao com orcamento pendente."));
 
         resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0043");
     }
 
     /// <summary>RF0057, RN0034, RN0051: conclusao gera garantia de 90 dias.</summary>

@@ -17,29 +17,29 @@ public class RN0031PoliticaUrgenciaTests
     {
         var categoria = Construtor.Categoria(categoriaDeRisco: true);
 
-        var urgencia = PoliticaUrgencia.Definir(categoria, indicacaoDeRisco: true, Urgencia.Baixa);
+        var urgencia = PoliticaUrgencia.Definir(categoria, indicacaoDeRisco: true);
 
         urgencia.ShouldBe(Urgencia.Alta);
     }
 
     [Fact]
-    public void Categoria_de_risco_sem_indicacao_mantem_a_urgencia_informada()
+    public void Categoria_de_risco_sem_indicacao_nasce_com_a_urgencia_padrao()
     {
         var categoria = Construtor.Categoria(categoriaDeRisco: true);
 
-        var urgencia = PoliticaUrgencia.Definir(categoria, indicacaoDeRisco: false, Urgencia.Baixa);
+        var urgencia = PoliticaUrgencia.Definir(categoria, indicacaoDeRisco: false);
 
-        urgencia.ShouldBe(Urgencia.Baixa);
+        urgencia.ShouldBe(PoliticaUrgencia.Padrao);
     }
 
     [Fact]
-    public void Categoria_comum_com_indicacao_de_risco_mantem_a_urgencia_informada()
+    public void Categoria_comum_com_indicacao_de_risco_nasce_com_a_urgencia_padrao()
     {
         var categoria = Construtor.Categoria(categoriaDeRisco: false);
 
-        var urgencia = PoliticaUrgencia.Definir(categoria, indicacaoDeRisco: true, Urgencia.Media);
+        var urgencia = PoliticaUrgencia.Definir(categoria, indicacaoDeRisco: true);
 
-        urgencia.ShouldBe(Urgencia.Media);
+        urgencia.ShouldBe(PoliticaUrgencia.Padrao);
     }
 
     [Fact]

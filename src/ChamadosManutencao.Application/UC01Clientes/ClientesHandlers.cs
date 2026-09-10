@@ -101,11 +101,10 @@ public sealed class ConsultarClientesHandler
 
     public ConsultarClientesHandler(IContextoDeLeitura leitura) => _leitura = leitura;
 
-    public async Task<ResultadoPaginado<ClienteResumoDto>> ExecutarAsync(
+    public async Task<IReadOnlyCollection<ClienteResumoDto>> ExecutarAsync(
         FiltroDeClientes filtro,
         CancellationToken cancellationToken = default)
     {
-        var paginacao = new ParametrosDePaginacao(filtro.Page, filtro.PageSize);
         var consulta = _leitura.Clientes;
 
         if (!string.IsNullOrWhiteSpace(filtro.Nome))
@@ -139,13 +138,9 @@ public sealed class ConsultarClientesHandler
             consulta = consulta.Where(c => c.Ativo == filtro.Ativo);
         }
 
-        var total = await consulta.LongCountAsync(cancellationToken);
-
         // RNF0011: projecao direta para DTO, sem materializar a entidade.
         var itens = await consulta
             .OrderBy(c => c.NomeCompleto)
-            .Skip(paginacao.QuantidadeParaPular())
-            .Take(paginacao.PageSize)
             .Select(c => new ClienteResumoDto(
                 c.Id,
                 c.CodigoCliente,
@@ -156,7 +151,7 @@ public sealed class ConsultarClientesHandler
                 c.Ativo))
             .ToListAsync(cancellationToken);
 
-        return new ResultadoPaginado<ClienteResumoDto>(itens, paginacao.Page, paginacao.PageSize, total);
+        return itens;
     }
 }
 

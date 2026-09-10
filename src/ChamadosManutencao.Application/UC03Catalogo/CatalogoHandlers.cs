@@ -175,13 +175,10 @@ public sealed class ConsultarCatalogoHandler
 
     public ConsultarCatalogoHandler(IContextoDeLeitura leitura) => _leitura = leitura;
 
-    public async Task<ResultadoPaginado<CategoriaDto>> ConsultarCategoriasAsync(
+    public async Task<IReadOnlyCollection<CategoriaDto>> ConsultarCategoriasAsync(
         bool? ativa,
-        int? page,
-        int? pageSize,
         CancellationToken cancellationToken = default)
     {
-        var paginacao = new ParametrosDePaginacao(page, pageSize);
         var consulta = _leitura.CategoriasServico;
 
         if (ativa is not null)
@@ -189,12 +186,8 @@ public sealed class ConsultarCatalogoHandler
             consulta = consulta.Where(c => c.Ativa == ativa);
         }
 
-        var total = await consulta.LongCountAsync(cancellationToken);
-
         var itens = await consulta
             .OrderBy(c => c.Nome)
-            .Skip(paginacao.QuantidadeParaPular())
-            .Take(paginacao.PageSize)
             .Select(c => new CategoriaDto(
                 c.Id,
                 c.Nome,
@@ -204,17 +197,14 @@ public sealed class ConsultarCatalogoHandler
                 c.Ativa))
             .ToListAsync(cancellationToken);
 
-        return new ResultadoPaginado<CategoriaDto>(itens, paginacao.Page, paginacao.PageSize, total);
+        return itens;
     }
 
-    public async Task<ResultadoPaginado<TipoServicoDto>> ConsultarTiposDeServicoAsync(
+    public async Task<IReadOnlyCollection<TipoServicoDto>> ConsultarTiposDeServicoAsync(
         Guid? categoriaId,
         bool? ativo,
-        int? page,
-        int? pageSize,
         CancellationToken cancellationToken = default)
     {
-        var paginacao = new ParametrosDePaginacao(page, pageSize);
         var consulta = _leitura.TiposServico;
 
         if (categoriaId is not null)
@@ -227,12 +217,8 @@ public sealed class ConsultarCatalogoHandler
             consulta = consulta.Where(t => t.Ativo == ativo);
         }
 
-        var total = await consulta.LongCountAsync(cancellationToken);
-
         var itens = await consulta
             .OrderBy(t => t.Nome)
-            .Skip(paginacao.QuantidadeParaPular())
-            .Take(paginacao.PageSize)
             .Select(t => new TipoServicoDto(
                 t.Id,
                 t.CategoriaServicoId,
@@ -241,6 +227,6 @@ public sealed class ConsultarCatalogoHandler
                 t.Ativo))
             .ToListAsync(cancellationToken);
 
-        return new ResultadoPaginado<TipoServicoDto>(itens, paginacao.Page, paginacao.PageSize, total);
+        return itens;
     }
 }

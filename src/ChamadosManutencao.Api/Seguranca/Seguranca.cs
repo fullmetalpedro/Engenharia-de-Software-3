@@ -16,6 +16,9 @@ public static class Politicas
     public const string Administrador = nameof(PapelUsuario.Administrador);
     public const string ClienteOuAdministrador = "ClienteOuAdministrador";
     public const string TecnicoOuAdministrador = "TecnicoOuAdministrador";
+
+    /// <summary>RF0053: o reagendamento e pedido pelo cliente ou pelo tecnico.</summary>
+    public const string ClienteOuTecnico = "ClienteOuTecnico";
 }
 
 /// <summary>Configuracao do JWT lida de appsettings/ambiente.</summary>

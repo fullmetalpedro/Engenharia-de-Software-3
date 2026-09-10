@@ -58,6 +58,11 @@ public sealed class FiltroDeAnaliseValidator : AbstractValidator<FiltroDeAnalise
             .WithMessage("O agrupamento deve ser 'categoria' ou 'tecnico'.");
     }
 
+    /// <summary>
+    /// RN0062: o intervalo entre as duas datas precisa ter de 1 a 24 meses. A contagem e sobre
+    /// a distancia entre elas, nao sobre quantas colunas o grafico teria: um intervalo de dez
+    /// dias que atravessa a virada do mes ainda e menor que um mes e por isso e recusado.
+    /// </summary>
     private static bool EstaNoIntervaloPermitido(FiltroDeAnalise filtro)
     {
         if (filtro.DataFim < filtro.DataInicio)
@@ -65,9 +70,8 @@ public sealed class FiltroDeAnaliseValidator : AbstractValidator<FiltroDeAnalise
             return false;
         }
 
-        var meses = QuantidadeDeMeses(filtro.DataInicio, filtro.DataFim);
-
-        return meses is >= IntervaloMinimoEmMeses and <= IntervaloMaximoEmMeses;
+        return filtro.DataFim >= filtro.DataInicio.AddMonths(IntervaloMinimoEmMeses)
+            && filtro.DataFim <= filtro.DataInicio.AddMonths(IntervaloMaximoEmMeses);
     }
 
     /// <summary>RN0061: o agrupamento e por mes, entao o intervalo tambem e contado em meses.</summary>

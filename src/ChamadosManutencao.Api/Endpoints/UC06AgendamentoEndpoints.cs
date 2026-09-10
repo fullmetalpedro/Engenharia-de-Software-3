@@ -61,7 +61,7 @@ public static class UC06AgendamentoEndpoints
                 await Validacao.GarantirValidoAsync(validator, comando, cancellationToken);
                 return Results.Ok(await handler.ExecutarAsync(id, comando, cancellationToken));
             })
-            .RequireAuthorization()
+            .RequireAuthorization(Politicas.ClienteOuTecnico)
             .WithSummary("Solicita o reagendamento do atendimento.")
             .WithDescription("Requisitos: RF0053, RN0041. Cliente dono ou tecnico atribuido.");
 

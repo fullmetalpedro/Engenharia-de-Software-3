@@ -98,15 +98,16 @@ public sealed class AbrirChamadoHandler
                 "RN0032");
         }
 
-        if (anexos.Count > Chamado.MaximoDeAnexosPorOrigem)
+        if (anexos.Count > Chamado.MaximoDeAnexos)
         {
             throw new ConflitoException(
-                $"Limite de {Chamado.MaximoDeAnexosPorOrigem} arquivos por chamado.",
+                $"Limite de {Chamado.MaximoDeAnexos} arquivos por chamado.",
                 "RNF0043");
         }
 
-        // RN0031: categoria de risco com indicacao de risco recebe urgencia ALTA.
-        var urgencia = PoliticaUrgencia.Definir(categoria, comando.IndicacaoDeRisco, comando.Urgencia);
+        // RN0031: categoria de risco com indicacao de risco recebe urgencia ALTA;
+        // fora disso o chamado nasce MEDIA e so o administrador reclassifica (RF0046).
+        var urgencia = PoliticaUrgencia.Definir(categoria, comando.IndicacaoDeRisco);
 
         // RNF0042: numero sequencial unico vindo da sequence.
         var numero = await _sequencias.ProximoNumeroDeChamadoAsync(cancellationToken);

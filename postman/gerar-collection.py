@@ -284,6 +284,7 @@ DATA_FUTURA = (
 PRE_REQUEST = {
     ("post", "/api/v1/clientes"): (
         "const carimbo = Date.now().toString().slice(-9);" + NL
+        + 'pm.collectionVariables.set("novoEmailCliente", "cliente." + carimbo + "@exemplo.com");' + NL
         + 'pm.collectionVariables.set("novoEmail", "cliente." + carimbo + "@exemplo.com");' + NL
         + 'pm.collectionVariables.set("novoCpf", ("1" + carimbo + "0").slice(0, 11));'
     ),
@@ -353,7 +354,6 @@ VARIANTES_MULTIPART = {
             ("tipoServicoId", "{{tipoServicoId}}"),
             ("descricaoProblema", "Vazamento embaixo da pia da cozinha desde ontem."),
             ("indicacaoDeRisco", "true"),
-            ("urgencia", "Media"),
             ("arquivos", ARQUIVO),
         ],
         "descricao": "RN0032: obrigatorio nas categorias marcadas com exigeFoto. "
@@ -388,7 +388,7 @@ POLITICA = {
     ("delete", "/api/v1/clientes/{id}/imoveis/{imovelId}"): "Cliente",
     ("get", "/api/v1/analises/chamados"): "Administrador",
     ("get", "/api/v1/analises/chamados/exportacao"): "Administrador",
-    ("get", "/api/v1/atendimentos/{id}/garantia"): "autenticado",
+    ("get", "/api/v1/atendimentos/{id}/garantia"): "ClienteOuAdministrador",
     ("get", "/api/v1/atendimentos/{id}/orcamento"): "autenticado",
     ("get", "/api/v1/categorias-servico"): "autenticado",
     ("get", "/api/v1/chamados"): "Administrador",
@@ -402,13 +402,12 @@ POLITICA = {
     ("get", "/api/v1/clientes/{id}/imoveis"): "ClienteOuAdministrador",
     ("get", "/api/v1/faturas"): "Administrador",
     ("get", "/api/v1/faturas/minhas"): "Cliente",
-    ("get", "/api/v1/faturas/{id}"): "autenticado",
-    ("get", "/api/v1/faturas/{id}/pagamentos"): "autenticado",
+    ("get", "/api/v1/faturas/{id}"): "ClienteOuAdministrador",
+    ("get", "/api/v1/faturas/{id}/pagamentos"): "ClienteOuAdministrador",
     ("get", "/api/v1/tecnicos"): "Administrador",
     ("get", "/api/v1/tecnicos/{id}"): "Administrador",
     ("get", "/api/v1/tecnicos/{id}/avaliacoes"): "autenticado",
     ("get", "/api/v1/tipos-servico"): "autenticado",
-    ("get", "/health"): "anonimo",
     ("patch", "/api/v1/chamados/{id}/status"): "Administrador",
     ("patch", "/api/v1/chamados/{id}/urgencia"): "Administrador",
     ("patch", "/api/v1/clientes/{id}/ativacao"): "Administrador",
@@ -417,13 +416,12 @@ POLITICA = {
     ("patch", "/api/v1/tecnicos/{id}/ativacao"): "Administrador",
     ("patch", "/api/v1/tecnicos/{id}/inativacao"): "Administrador",
     ("post", "/api/v1/agendamentos/{id}/confirmacao"): "Cliente",
-    ("post", "/api/v1/agendamentos/{id}/reagendamento"): "autenticado",
+    ("post", "/api/v1/agendamentos/{id}/reagendamento"): "ClienteOuTecnico",
     ("post", "/api/v1/atendimentos/{id}/conclusao"): "Tecnico",
     ("post", "/api/v1/atendimentos/{id}/garantia/acionamento"): "Cliente",
     ("post", "/api/v1/atendimentos/{id}/orcamento"): "Tecnico",
     ("post", "/api/v1/auth/alterar-senha"): "autenticado",
     ("post", "/api/v1/auth/login"): "anonimo",
-    ("post", "/api/v1/auth/refresh"): "autenticado",
     ("post", "/api/v1/avaliacoes/{id}/resposta"): "Administrador",
     ("post", "/api/v1/categorias-servico"): "Administrador",
     ("post", "/api/v1/categorias-servico/{id}/tipos-servico"): "Administrador",
@@ -460,6 +458,7 @@ TOKEN_DO_PAPEL = {
     "Tecnico": "{{tokenTecnico}}",
     "ClienteOuAdministrador": "{{tokenCliente}}",
     "TecnicoOuAdministrador": "{{tokenTecnico}}",
+    "ClienteOuTecnico": "{{tokenCliente}}",
     "autenticado": "{{token}}",
 }
 
@@ -613,82 +612,71 @@ def login(papel, variavel_email):
 PASTA_INICIAL = {
     "name": "Comecar aqui",
     "description": (
-        "Rode esta pasta inteira uma vez, de cima para baixo, logo depois do seed. Ela autentica "
-        "e carrega os identificadores do seed nas variaveis da collection: a partir daqui as "
-        "outras pastas funcionam sem voce copiar GUID nenhum." + NL + NL
+        "Rode esta pasta inteira uma vez, de cima para baixo. Ela monta o cenario do zero e "
+        "guarda os identificadores nas variaveis da collection: a partir daqui as outras pastas "
+        "funcionam sem voce copiar GUID nenhum." + NL + NL
+        + "Pre-requisito: o administrador precisa existir. Ele nasce por linha de comando, que e "
+        + "o unico caminho previsto:" + NL + NL
+        + "    dotnet run --project src/ChamadosManutencao.Api -- criar-admin" + NL + NL
+        + "Use no ambiente o mesmo e-mail e a mesma senha que voce passou nas variaveis "
+        + "ADMIN_INICIAL_*." + NL + NL
         + "Para trocar de papel depois, rode so o login correspondente."
     ),
     "item": [
-        requisicao_avulsa("GET", "/health", "A API esta no ar?", sem_auth=True),
         login("administrador", "emailAdministrador"),
         requisicao_avulsa(
-            "GET", "/api/v1/categorias-servico", "Carregar categoria",
-            descricao="Guarda categoriaId. Prefere a categoria Hidraulica do seed.",
-            query=[("pageSize", "100")],
-            script=("const itens = pm.response.json().itens;" + NL
-                    + 'const escolhida = itens.find(c => c.nome.startsWith("Hidraulica")) || itens[0];' + NL
-                    + 'pm.collectionVariables.set("categoriaId", escolhida.id);' + NL
-                    + 'console.log("categoriaId = " + escolhida.nome);'),
+            "POST", "/api/v1/categorias-servico", "Criar a categoria de servico",
+            descricao="Guarda categoriaId. Sem exigencia de foto, para o resto rodar so com JSON.",
+            corpo={"nome": "{{novoNome}}", "descricao": "Categoria criada pela collection.",
+                   "exigeFoto": False, "categoriaDeRisco": False},
+            papel="Administrador",
+            script='pm.collectionVariables.set("categoriaId", pm.response.json().id);',
         ),
         requisicao_avulsa(
-            "GET", "/api/v1/tipos-servico", "Carregar tipo de servico",
-            descricao="Guarda tipoServicoId do primeiro tipo da categoria carregada.",
-            query=[("categoriaId", "{{categoriaId}}")],
-            script='pm.collectionVariables.set("tipoServicoId", pm.response.json().itens[0].id);',
+            "POST", "/api/v1/categorias-servico/{{categoriaId}}/tipos-servico",
+            "Criar o tipo de servico",
+            descricao="Guarda tipoServicoId.",
+            corpo={"nome": "{{novoNome}}", "descricao": "Tipo de servico criado pela collection."},
+            papel="Administrador",
+            script='pm.collectionVariables.set("tipoServicoId", pm.response.json().id);',
         ),
         requisicao_avulsa(
-            "GET", "/api/v1/tecnicos", "Carregar tecnico da categoria",
-            descricao="Guarda tecnicoId e emailTecnico de quem atende a categoria no Centro.",
-            query=[("especialidadeId", "{{categoriaId}}"), ("bairro", "Centro")],
-            script=("const itens = pm.response.json().itens;" + NL
-                    + "function definirEmailTecnico(valor) {" + NL
-                    + '    if (pm.environment.has("emailTecnico")) pm.environment.set("emailTecnico", valor);' + NL
-                    + '    else pm.collectionVariables.set("emailTecnico", valor);' + NL
-                    + "}" + NL
-                    + "if (itens.length) {" + NL
-                    + '    pm.collectionVariables.set("tecnicoId", itens[0].id);' + NL
-                    + '    definirEmailTecnico(itens[0].email);' + NL
-                    + '    console.log("tecnicoId = " + itens[0].nomeCompleto);' + NL
-                    + "} else {" + NL
-                    + '    console.warn("Nenhum tecnico atende essa categoria no Centro.");' + NL
-                    + "}"),
+            "POST", "/api/v1/tecnicos", "Cadastrar o tecnico",
+            descricao="Especialidade na categoria criada e area de atendimento no Centro. "
+                      "Guarda tecnicoId e o e-mail dele.",
+            corpo={"nomeCompleto": "Tecnico da Collection", "cpf": "{{novoCpf}}",
+                   "email": "{{novoEmail}}", "telefone": "11930000011", "senha": "Senha@123",
+                   "especialidadeIds": ["{{categoriaId}}"],
+                   "areasAtendimento": [{"bairro": "Centro", "cepInicial": "01000000",
+                                         "cepFinal": "01999999", "taxaDeslocamento": 25.00}]},
+            papel="Administrador",
+            script=("const t = pm.response.json();" + NL
+                    + 'pm.collectionVariables.set("tecnicoId", t.id);' + NL
+                    + 'if (pm.environment.has("emailTecnico")) pm.environment.set("emailTecnico", t.email);' + NL
+                    + 'else pm.collectionVariables.set("emailTecnico", t.email);' + NL
+                    + 'console.log("tecnico " + t.codigoTecnico + " / " + t.email);'),
         ),
         requisicao_avulsa(
-            "GET", "/api/v1/clientes", "Carregar cliente",
-            descricao="Guarda clienteId do e-mail em emailCliente.",
-            query=[("email", "{{emailCliente}}")],
-            script='pm.collectionVariables.set("clienteId", pm.response.json().itens[0].id);',
+            "POST", "/api/v1/clientes", "Cadastrar o cliente",
+            descricao="Cadastro anonimo, com um imovel no Centro. Guarda o e-mail e o imovelId.",
+            corpo={"nomeCompleto": "Cliente da Collection", "cpf": "{{novoCpf}}",
+                   "email": "{{novoEmailCliente}}", "telefone": "11940000001", "senha": "Senha@123",
+                   "imoveis": [{"apelido": "Apartamento do Centro", "tipoImovel": "Apartamento",
+                                "logradouro": "Rua Sete de Abril", "numero": "120",
+                                "complemento": "Apto 71", "bairro": "Centro", "cep": "01043000",
+                                "cidade": "Sao Paulo", "estado": "SP"}]},
+            sem_auth=True,
+            script=("const c = pm.response.json();" + NL
+                    + 'pm.collectionVariables.set("imovelId", c.imoveis[0].id);' + NL
+                    + 'if (pm.environment.has("emailCliente")) pm.environment.set("emailCliente", c.email);' + NL
+                    + 'else pm.collectionVariables.set("emailCliente", c.email);' + NL
+                    + 'console.log("cliente " + c.codigoCliente + " / " + c.email);'),
         ),
-        requisicao_avulsa(
-            "GET", "/api/v1/clientes/{{clienteId}}/imoveis", "Carregar imovel do cliente",
-            descricao="Guarda imovelId, que a abertura de chamado usa.",
-            script=("const imoveis = pm.response.json();" + NL
-                    + 'pm.collectionVariables.set("imovelId", imoveis[0].id);' + NL
-                    + 'console.log("imovelId = " + imoveis[0].apelido + " (CEP " + imoveis[0].cep + ")");'),
-        ),
-        requisicao_avulsa(
-            "GET", "/api/v1/chamados", "Carregar um chamado concluido",
-            descricao="Guarda chamadoId e numeroChamado de um chamado do seed.",
-            query=[("status", "Concluido"), ("clienteId", "{{clienteId}}"), ("pageSize", "1")],
-            script=("const itens = pm.response.json().itens;" + NL
-                    + "if (itens.length) {" + NL
-                    + '    pm.collectionVariables.set("chamadoId", itens[0].id);' + NL
-                    + '    pm.collectionVariables.set("numeroChamado", itens[0].numero);' + NL
-                    + "}"),
-        ),
-        requisicao_avulsa(
-            "GET", "/api/v1/faturas", "Carregar uma fatura",
-            descricao="Guarda faturaId de uma fatura do cliente.",
-            query=[("clienteId", "{{clienteId}}"), ("pageSize", "1")],
-            script=("const itens = pm.response.json().itens;" + NL
-                    + 'if (itens.length) pm.collectionVariables.set("faturaId", itens[0].id);'),
-        ),
-        login("tecnico", "emailTecnico"),
         login("cliente", "emailCliente"),
+        login("tecnico", "emailTecnico"),
         login("administrador de novo", "emailAdministrador"),
     ],
 }
-
 
 # ----------------------------------------------------- pasta "Jornada completa"
 
@@ -734,16 +722,27 @@ PASTA_JORNADA = {
                       + 'if (pm.environment.has("emailTecnico")) pm.environment.set("emailTecnico", t.email);' + NL
                       + 'else pm.collectionVariables.set("emailTecnico", t.email);' + NL
                       + 'console.log("tecnico " + t.codigoTecnico + " / " + t.email);')),
+        requisicao_avulsa(
+            "POST", "/api/v1/clientes", "4. Cliente cria a propria conta",
+            descricao="Cadastro anonimo, com um imovel no Centro.",
+            corpo={"nomeCompleto": "Cliente da Jornada", "cpf": "{{novoCpf}}",
+                   "email": "{{novoEmailCliente}}", "telefone": "11940000001",
+                   "senha": "Senha@123",
+                   "imoveis": [{"apelido": "Apartamento do Centro", "tipoImovel": "Apartamento",
+                                "logradouro": "Rua Sete de Abril", "numero": "120",
+                                "complemento": "Apto 71", "bairro": "Centro", "cep": "01043000",
+                                "cidade": "Sao Paulo", "estado": "SP"}]},
+            sem_auth=True,
+            script=("const c = pm.response.json();" + NL
+                    + 'pm.collectionVariables.set("imovelId", c.imoveis[0].id);' + NL
+                    + 'if (pm.environment.has("emailCliente")) pm.environment.set("emailCliente", c.email);' + NL
+                    + 'else pm.collectionVariables.set("emailCliente", c.email);')),
         login("cliente", "emailCliente"),
-        passo(4, "GET", "/api/v1/clientes/{{clienteId}}/imoveis", "Cliente confere o imovel",
-              "Cliente",
-              script=("const imoveis = pm.response.json();" + NL
-                      + 'pm.collectionVariables.set("imovelId", imoveis[0].id);')),
         passo(5, "POST", "/api/v1/chamados", "Cliente abre o chamado", "Cliente",
               corpo={"imovelId": "{{imovelId}}", "categoriaServicoId": "{{categoriaId}}",
                      "tipoServicoId": "{{tipoServicoId}}",
                      "descricaoProblema": "Aparelho parou depois da queda de energia.",
-                     "indicacaoDeRisco": False, "urgencia": "Media"},
+                     "indicacaoDeRisco": False},
               script=("const ch = pm.response.json();" + NL
                       + 'pm.collectionVariables.set("chamadoId", ch.id);' + NL
                       + 'pm.collectionVariables.set("numeroChamado", ch.numero);' + NL
@@ -857,8 +856,8 @@ ORDEM_DAS_PASTAS = [
 ]
 
 DESCRICAO_DA_PASTA = {
-    "Autenticacao": "Login, reemissao de token e troca de senha. Atencao: a troca de senha muda a "
-                    "senha de verdade e invalida o Senha@123 do seed para aquele usuario.",
+    "Autenticacao": "Login e troca de senha. Atencao: a troca de senha muda a senha de verdade "
+                    "e invalida a anterior para aquele usuario.",
     "UC01 Clientes": "Cadastro, alteracao, ativacao, inativacao, consulta e imoveis. O cadastro e "
                      "anonimo: e o formulario de criar conta.",
     "UC02 Tecnicos": "Equipe, especialidades, areas de atendimento (com a taxa de deslocamento que "
@@ -899,25 +898,24 @@ VARIAVEIS = [
     ("tipoServicoId", ""), ("chamadoId", ""), ("numeroChamado", ""), ("agendamentoId", ""),
     ("atendimentoId", ""), ("orcamentoId", ""), ("faturaId", ""), ("formaPagamentoId", ""),
     ("avaliacaoId", ""), ("garantiaId", ""), ("chamadoDeGarantiaId", ""),
-    ("novoEmail", ""), ("novoCpf", ""), ("novoNome", ""), ("dataAgendamento", ""),
+    ("novoEmail", ""), ("novoEmailCliente", ""), ("novoCpf", ""), ("novoNome", ""),
+    ("dataAgendamento", ""),
     ("clienteNovoId", ""), ("administradorId", ""),
 ]
 
 DESCRICAO = (
     "Interface de operacao do sistema de abertura de chamados de manutencao." + NL + NL
     + "**Como comecar**" + NL + NL
-    + "1. Popule a base e suba a API:" + NL
-    + "   - `dotnet run --project src/ChamadosManutencao.Api -- seed`" + NL
+    + "1. Crie o administrador e suba a API:" + NL
+    + "   - `dotnet run --project src/ChamadosManutencao.Api -- criar-admin`" + NL
     + "   - `dotnet run --project src/ChamadosManutencao.Api`" + NL
     + "2. Selecione o ambiente **Chamados - local**." + NL
-    + "3. Rode a pasta **Comecar aqui** inteira. Ela autentica e carrega os ids do seed." + NL
+    + "3. Rode a pasta **Comecar aqui** inteira. Ela monta o cenario do zero." + NL
     + "4. A partir dai, use as pastas UC01 a UC12 na ordem que quiser." + NL + NL
     + "**Trocar de papel**: rode `Comecar aqui > Entrar como tecnico` (ou cliente, ou "
     + "administrador). O token fica na variavel token e vale para toda a collection." + NL + NL
-    + "Usuarios do seed, senha `Senha@123`:" + NL + NL
-    + "- administrador: `admin@chamados.local`" + NL
-    + "- tecnico: `carlos.ribeiro@chamados.local`" + NL
-    + "- cliente: `ana.martins@exemplo.com`" + NL + NL
+    + "O administrador vem do comando criar-admin; o tecnico e o cliente sao criados pela "
+    + "pasta Comecar aqui, com senha `Senha@123`." + NL + NL
     + "**Encadeamento**: toda requisicao que cria alguma coisa guarda o identificador em variavel "
     + "de collection (chamadoId, atendimentoId, faturaId...). Seguindo a ordem das pastas, uma "
     + "alimenta a outra." + NL + NL
@@ -932,12 +930,14 @@ PRE_JORNADA = (
     "const carimbo = Date.now().toString().slice(-9);" + NL
     + 'pm.collectionVariables.set("novoNome", "Jornada " + carimbo.slice(-6));' + NL
     + 'pm.collectionVariables.set("novoEmail", "tecnico." + carimbo + "@chamados.local");' + NL
+    + 'pm.collectionVariables.set("novoEmailCliente", "cliente." + carimbo + "@exemplo.com");' + NL
     + 'pm.collectionVariables.set("novoCpf", ("3" + carimbo + "0").slice(0, 11));' + NL
     + "const daqui = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);" + NL
     + 'pm.collectionVariables.set("dataAgendamento", daqui.toISOString());'
 )
 
 PASTA_JORNADA["event"] = [evento("prerequest", PRE_JORNADA)]
+PASTA_INICIAL["event"] = [evento("prerequest", PRE_JORNADA)]
 
 collection = {
     "info": {
@@ -962,8 +962,8 @@ ambiente = {
     "values": [
         {"key": "baseUrl", "value": "http://localhost:5080", "enabled": True, "type": "default"},
         {"key": "emailAdministrador", "value": "admin@chamados.local", "enabled": True, "type": "default"},
-        {"key": "emailTecnico", "value": "carlos.ribeiro@chamados.local", "enabled": True, "type": "default"},
-        {"key": "emailCliente", "value": "ana.martins@exemplo.com", "enabled": True, "type": "default"},
+        {"key": "emailTecnico", "value": "", "enabled": True, "type": "default"},
+        {"key": "emailCliente", "value": "", "enabled": True, "type": "default"},
         {"key": "senha", "value": "Senha@123", "enabled": True, "type": "default"},
         {"key": "dataInicio", "value": "2025-09-01T00:00:00Z", "enabled": True, "type": "default"},
         {"key": "dataFim", "value": "2026-09-01T00:00:00Z", "enabled": True, "type": "default"},

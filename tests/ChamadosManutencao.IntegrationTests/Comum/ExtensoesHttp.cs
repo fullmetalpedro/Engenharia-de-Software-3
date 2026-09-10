@@ -52,16 +52,6 @@ public static class ExtensoesHttp
         return resposta;
     }
 
-    /// <summary>Le o identificador do requisito violado, gravado no ProblemDetails.</summary>
-    public static async Task<string?> RequisitoVioladoAsync(this HttpResponseMessage resposta)
-    {
-        using var documento = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
-
-        return documento.RootElement.TryGetProperty("requisito", out var requisito)
-            ? requisito.GetString()
-            : null;
-    }
-
     /// <summary>Le o corpo bruto, util para conferir que um dado sensivel nao vazou.</summary>
     public static Task<string> TextoAsync(this HttpResponseMessage resposta) =>
         resposta.Content.ReadAsStringAsync();

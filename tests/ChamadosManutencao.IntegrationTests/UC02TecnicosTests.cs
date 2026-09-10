@@ -108,20 +108,20 @@ public class UC02TecnicosTests : TesteDeIntegracao
 
         var porEspecialidade = await (await Admin.GetAsync(
                 $"/api/v1/tecnicos?especialidadeId={eletrica.Id}"))
-            .LerAsync<ResultadoPaginado<TecnicoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<TecnicoResumoDto>>();
 
-        porEspecialidade.Total.ShouldBe(1);
-        porEspecialidade.Itens.Single().Id.ShouldBe(doCentro.Id);
+        porEspecialidade.Count.ShouldBe(1);
+        porEspecialidade.Single().Id.ShouldBe(doCentro.Id);
 
         var porBairro = await (await Admin.GetAsync("/api/v1/tecnicos?bairro=Pinheiros"))
-            .LerAsync<ResultadoPaginado<TecnicoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<TecnicoResumoDto>>();
 
-        porBairro.Total.ShouldBe(1);
+        porBairro.Count.ShouldBe(1);
 
         var porCep = await (await Admin.GetAsync("/api/v1/tecnicos?cep=01043000"))
-            .LerAsync<ResultadoPaginado<TecnicoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<TecnicoResumoDto>>();
 
-        porCep.Itens.ShouldContain(t => t.Id == doCentro.Id);
+        porCep.ShouldContain(t => t.Id == doCentro.Id);
     }
 
     /// <summary>RF0026: a lista de especialidades e substituida por completo.</summary>

@@ -32,10 +32,8 @@ public static class UC03CatalogoEndpoints
         categorias.MapGet("/", async (
                 ConsultarCatalogoHandler handler,
                 CancellationToken cancellationToken,
-                bool? ativa = null,
-                int? page = null,
-                int? pageSize = null) =>
-                Results.Ok(await handler.ConsultarCategoriasAsync(ativa, page, pageSize, cancellationToken)))
+                bool? ativa = null) =>
+                Results.Ok(await handler.ConsultarCategoriasAsync(ativa, cancellationToken)))
             .RequireAuthorization()
             .WithSummary("Consulta as categorias de servico.")
             .WithDescription("Requisitos: RF0034, RNF0011.");
@@ -75,14 +73,10 @@ public static class UC03CatalogoEndpoints
                 ConsultarCatalogoHandler handler,
                 CancellationToken cancellationToken,
                 Guid? categoriaId = null,
-                bool? ativo = null,
-                int? page = null,
-                int? pageSize = null) =>
+                bool? ativo = null) =>
                 Results.Ok(await handler.ConsultarTiposDeServicoAsync(
                     categoriaId,
                     ativo,
-                    page,
-                    pageSize,
                     cancellationToken)))
             .RequireAuthorization()
             .WithSummary("Consulta os tipos de servico.")

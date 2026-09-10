@@ -51,7 +51,7 @@ public class JornadaCompletaTests : TesteDeIntegracao
             .LerAsync<FormaPagamentoDto>();
 
         // 4. Abertura com indicacao de risco: urgencia ALTA automatica (UC04, RN0031).
-        var chamado = await AbrirChamadoAsync(cenario, Urgencia.Baixa, indicacaoDeRisco: true);
+        var chamado = await AbrirChamadoAsync(cenario, indicacaoDeRisco: true);
         chamado.Urgencia.ShouldBe(Urgencia.Alta);
         chamado.Status.ShouldBe(StatusChamado.Aberto);
 

@@ -14,7 +14,7 @@ namespace ChamadosManutencao.Domain.Chamados;
 public sealed class Chamado : RaizDeAgregado
 {
     /// <summary>RNF0043: no maximo 5 anexos por chamado, contados por origem (decisao D09).</summary>
-    public const int MaximoDeAnexosPorOrigem = 5;
+    public const int MaximoDeAnexos = 5;
 
     /// <summary>RN0035: prazo de reabertura, em dias corridos apos a conclusao.</summary>
     public const int PrazoDeReaberturaEmDias = 7;
@@ -356,12 +356,11 @@ public sealed class Chamado : RaizDeAgregado
             throw new ExcecaoDeDominio("O anexo pertence a outro chamado.", "RF0042");
         }
 
-        var quantidadeNaOrigem = _anexos.Count(a => a.Origem == anexo.Origem);
-
-        if (quantidadeNaOrigem >= MaximoDeAnexosPorOrigem)
+        // RNF0043: o limite e por chamado, somando a abertura e a conclusao.
+        if (_anexos.Count >= MaximoDeAnexos)
         {
             throw new ExcecaoDeDominio(
-                $"Limite de {MaximoDeAnexosPorOrigem} arquivos por chamado atingido.",
+                $"Limite de {MaximoDeAnexos} arquivos por chamado atingido.",
                 "RNF0043");
         }
 

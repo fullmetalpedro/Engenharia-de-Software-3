@@ -33,9 +33,9 @@ public class UC05TriagemTests : TesteDeIntegracao
         await AbrirChamadoAsync(cenarioDoOutro);
 
         var todos = await (await Admin.GetAsync("/api/v1/chamados"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
 
-        todos.Total.ShouldBe(2);
+        todos.Count.ShouldBe(2);
     }
 
     /// <summary>RF0044: filtros por status, urgencia, categoria, cliente e numero.</summary>
@@ -43,26 +43,32 @@ public class UC05TriagemTests : TesteDeIntegracao
     public async Task Consulta_do_administrador_aceita_filtros_combinaveis()
     {
         var cenario = await MontarCenarioBasicoAsync();
-        var alta = await AbrirChamadoAsync(cenario, Urgencia.Alta);
-        await AbrirChamadoAsync(cenario, Urgencia.Baixa);
+        var alta = await AbrirChamadoAsync(cenario);
+        await AbrirChamadoAsync(cenario);
+
+        // RF0046: a urgencia vem da triagem, nao da abertura.
+        await (await Admin.AlterarAsync(
+                $"/api/v1/chamados/{alta.Id}/urgencia",
+                new ClassificarUrgenciaCommand(Urgencia.Alta)))
+            .DeveTerStatusAsync(HttpStatusCode.NoContent);
 
         var porNumero = await (await Admin.GetAsync($"/api/v1/chamados?numero={alta.Numero}"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
-        porNumero.Total.ShouldBe(1);
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
+        porNumero.Count.ShouldBe(1);
 
         var porUrgencia = await (await Admin.GetAsync("/api/v1/chamados?urgencia=Alta&status=Aberto"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
-        porUrgencia.Total.ShouldBe(1);
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
+        porUrgencia.Count.ShouldBe(1);
 
         var porCategoria = await (await Admin.GetAsync(
                 $"/api/v1/chamados?categoriaId={cenario.Categoria.Id}"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
-        porCategoria.Total.ShouldBe(2);
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
+        porCategoria.Count.ShouldBe(2);
 
         var porCliente = await (await Admin.GetAsync(
                 $"/api/v1/chamados?clienteId={cenario.Cliente.Id}"))
-            .LerAsync<ResultadoPaginado<ChamadoResumoDto>>();
-        porCliente.Total.ShouldBe(2);
+            .LerAsync<IReadOnlyCollection<ChamadoResumoDto>>();
+        porCliente.Count.ShouldBe(2);
     }
 
     /// <summary>RF0046.</summary>
@@ -70,7 +76,7 @@ public class UC05TriagemTests : TesteDeIntegracao
     public async Task Administrador_classifica_a_urgencia_do_chamado()
     {
         var cenario = await MontarCenarioBasicoAsync();
-        var chamado = await AbrirChamadoAsync(cenario, Urgencia.Baixa);
+        var chamado = await AbrirChamadoAsync(cenario);
 
         await (await Admin.AlterarAsync(
                 $"/api/v1/chamados/{chamado.Id}/urgencia",
@@ -115,7 +121,6 @@ public class UC05TriagemTests : TesteDeIntegracao
             new AtribuirTecnicoCommand(tecnicoDeEletrica.Id));
 
         await resposta.DeveTerStatusAsync(HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0022");
     }
 
     /// <summary>RN0023: o imovel precisa estar na area de atendimento do tecnico.</summary>
@@ -135,7 +140,6 @@ public class UC05TriagemTests : TesteDeIntegracao
             new AtribuirTecnicoCommand(tecnicoDeOutraArea.Id));
 
         await resposta.DeveTerStatusAsync(HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0023");
     }
 
     /// <summary>RF0023: tecnico inativo nao recebe chamado.</summary>

@@ -126,7 +126,6 @@ public class UC06AgendamentoTests : TesteDeIntegracao
             new AgendarCommand(horario.AddMinutes(30), 120));
 
         await resposta.DeveTerStatusAsync(HttpStatusCode.Conflict);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0041");
     }
 
     /// <summary>RN0041: fora da janela ocupada o agendamento passa.</summary>

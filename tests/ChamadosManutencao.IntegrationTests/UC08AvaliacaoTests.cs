@@ -110,7 +110,6 @@ public class UC08AvaliacaoTests : TesteDeIntegracao
             new RegistrarAvaliacaoCommand(3));
 
         resposta.StatusCode.ShouldBeOneOf(HttpStatusCode.Conflict, HttpStatusCode.UnprocessableEntity);
-        (await resposta.RequisitoVioladoAsync()).ShouldBe("RN0052");
     }
 
     /// <summary>RF0062: as avaliacoes recebidas por um tecnico.</summary>
@@ -127,10 +126,10 @@ public class UC08AvaliacaoTests : TesteDeIntegracao
 
         var avaliacoes = await (await Admin.GetAsync(
                 $"/api/v1/tecnicos/{cenario.Tecnico.Id}/avaliacoes"))
-            .LerAsync<ResultadoPaginado<AvaliacaoDto>>();
+            .LerAsync<IReadOnlyCollection<AvaliacaoDto>>();
 
-        avaliacoes.Total.ShouldBe(1);
-        avaliacoes.Itens.Single().Nota.ShouldBe(4);
+        avaliacoes.Count.ShouldBe(1);
+        avaliacoes.Single().Nota.ShouldBe(4);
     }
 
     /// <summary>RF0063: resposta publica do administrador.</summary>
@@ -156,9 +155,9 @@ public class UC08AvaliacaoTests : TesteDeIntegracao
         // A resposta passa a acompanhar a avaliacao na consulta do tecnico (RF0062).
         var avaliacoes = await (await Admin.GetAsync(
                 $"/api/v1/tecnicos/{cenario.Tecnico.Id}/avaliacoes"))
-            .LerAsync<ResultadoPaginado<AvaliacaoDto>>();
+            .LerAsync<IReadOnlyCollection<AvaliacaoDto>>();
 
-        avaliacoes.Itens.Single().Resposta.ShouldNotBeNull();
+        avaliacoes.Single().Resposta.ShouldNotBeNull();
     }
 
     [Fact]

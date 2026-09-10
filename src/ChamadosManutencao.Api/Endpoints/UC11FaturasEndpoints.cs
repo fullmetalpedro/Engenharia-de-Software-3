@@ -24,11 +24,9 @@ public static class UC11FaturasEndpoints
                 DateTimeOffset? dataInicio = null,
                 DateTimeOffset? dataFim = null,
                 long? numeroChamado = null,
-                Guid? clienteId = null,
-                int? page = null,
-                int? pageSize = null) =>
+                Guid? clienteId = null) =>
                 Results.Ok(await handler.ConsultarAsync(
-                    new FiltroDeFaturas(status, dataInicio, dataFim, numeroChamado, clienteId, page, pageSize),
+                    new FiltroDeFaturas(status, dataInicio, dataFim, numeroChamado, clienteId),
                     cancellationToken)))
             .RequireAuthorization(Politicas.Administrador)
             .WithSummary("Consulta as faturas de todos os clientes.")
@@ -40,11 +38,9 @@ public static class UC11FaturasEndpoints
                 StatusFatura? status = null,
                 DateTimeOffset? dataInicio = null,
                 DateTimeOffset? dataFim = null,
-                long? numeroChamado = null,
-                int? page = null,
-                int? pageSize = null) =>
+                long? numeroChamado = null) =>
                 Results.Ok(await handler.MinhasFaturasAsync(
-                    new FiltroDeFaturas(status, dataInicio, dataFim, numeroChamado, null, page, pageSize),
+                    new FiltroDeFaturas(status, dataInicio, dataFim, numeroChamado, null),
                     cancellationToken)))
             .RequireAuthorization(Politicas.Cliente)
             .WithSummary("Consulta as faturas do cliente autenticado.")
@@ -55,7 +51,7 @@ public static class UC11FaturasEndpoints
                 ConsultarFaturasHandler handler,
                 CancellationToken cancellationToken) =>
                 Results.Ok(await handler.ObterAsync(id, cancellationToken)))
-            .RequireAuthorization()
+            .RequireAuthorization(Politicas.ClienteOuAdministrador)
             .WithSummary("Consulta uma fatura pelo identificador.")
             .WithDescription("Requisitos: RF0083.");
 
@@ -79,7 +75,7 @@ public static class UC11FaturasEndpoints
                 ConsultarFaturasHandler handler,
                 CancellationToken cancellationToken) =>
                 Results.Ok(await handler.ConsultarPagamentosAsync(id, cancellationToken)))
-            .RequireAuthorization()
+            .RequireAuthorization(Politicas.ClienteOuAdministrador)
             .WithSummary("Consulta os pagamentos da fatura.")
             .WithDescription("Requisitos: RF0084.");
 

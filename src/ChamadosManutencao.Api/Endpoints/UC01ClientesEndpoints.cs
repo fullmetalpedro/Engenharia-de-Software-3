@@ -37,11 +37,9 @@ public static class UC01ClientesEndpoints
                 string? email = null,
                 string? telefone = null,
                 string? codigo = null,
-                bool? ativo = null,
-                int? page = null,
-                int? pageSize = null) =>
+                bool? ativo = null) =>
                 Results.Ok(await handler.ExecutarAsync(
-                    new FiltroDeClientes(nome, cpf, email, telefone, codigo, ativo, page, pageSize),
+                    new FiltroDeClientes(nome, cpf, email, telefone, codigo, ativo),
                     cancellationToken)))
             .RequireAuthorization(Politicas.Administrador)
             .WithSummary("Consulta clientes por filtro combinavel.")

@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -93,7 +92,10 @@ builder.Services.AddAuthorizationBuilder()
         politica => politica.RequireRole(Politicas.Cliente, Politicas.Administrador))
     .AddPolicy(
         Politicas.TecnicoOuAdministrador,
-        politica => politica.RequireRole(Politicas.Tecnico, Politicas.Administrador));
+        politica => politica.RequireRole(Politicas.Tecnico, Politicas.Administrador))
+    .AddPolicy(
+        Politicas.ClienteOuTecnico,
+        politica => politica.RequireRole(Politicas.Cliente, Politicas.Tecnico));
 
 // ---------- Documentacao ----------
 builder.Services.AddOpenApi(opcoes => opcoes.AddDocumentTransformer((documento, _, _) =>
@@ -134,14 +136,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapOpenApi();
-app.MapScalarApiReference(opcoes => opcoes
-    .WithTitle("Chamados de Manutencao")
-    .WithTheme(ScalarTheme.BluePlanet));
-
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
-    .WithTags("Infraestrutura")
-    .WithSummary("Health check da API.")
-    .AllowAnonymous();
+app.UseSwaggerUI(opcoes =>
+{
+    opcoes.SwaggerEndpoint("/openapi/v1.json", "Chamados de Manutencao v1");
+    opcoes.DocumentTitle = "Chamados de Manutencao";
+});
 
 app.MapearEndpoints();
 

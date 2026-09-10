@@ -192,7 +192,6 @@ public abstract class TesteDeIntegracao : IAsyncLifetime
     /// <summary>Abre um chamado como cliente, em JSON (sem anexos).</summary>
     protected async Task<ChamadoCriadoDto> AbrirChamadoAsync(
         CenarioBasico cenario,
-        Urgencia urgencia = Urgencia.Media,
         bool indicacaoDeRisco = false,
         string descricao = "Problema relatado pelo cliente no teste.")
     {
@@ -201,8 +200,7 @@ public abstract class TesteDeIntegracao : IAsyncLifetime
             cenario.Categoria.Id,
             cenario.TipoServico.Id,
             descricao,
-            indicacaoDeRisco,
-            urgencia);
+            indicacaoDeRisco);
 
         var resposta = await cenario.Cliente.Http.PostarAsync("/api/v1/chamados", comando);
 
@@ -221,8 +219,7 @@ public abstract class TesteDeIntegracao : IAsyncLifetime
             { new StringContent(cenario.Categoria.Id.ToString()), "categoriaServicoId" },
             { new StringContent(cenario.TipoServico.Id.ToString()), "tipoServicoId" },
             { new StringContent("Equipamento com problema, foto anexada."), "descricaoProblema" },
-            { new StringContent(indicacaoDeRisco.ToString()), "indicacaoDeRisco" },
-            { new StringContent(nameof(Urgencia.Media)), "urgencia" }
+            { new StringContent(indicacaoDeRisco.ToString()), "indicacaoDeRisco" }
         };
 
         for (var indice = 0; indice < quantidadeDeFotos; indice++)
