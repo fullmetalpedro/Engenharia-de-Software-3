@@ -120,6 +120,10 @@ dotnet run --project src/ChamadosManutencao.Api -- criar-admin
 Idempotente: se já existe administrador, não faz nada. Daí em diante tudo passa pela API — o
 administrador cadastra o catálogo e os técnicos, e os clientes criam a própria conta.
 
+Se for usar a collection do Postman, repita esse e-mail e essa senha nas variáveis
+`emailAdministrador` e `senhaAdministrador` do ambiente — é por elas que a collection entra
+como administrador.
+
 ## Testes
 
 **Unitários** — sem Docker nem banco, uma classe por regra de negócio:

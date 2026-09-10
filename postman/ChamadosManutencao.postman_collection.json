@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chamados de Manutencao",
-    "description": "Interface de operacao do sistema de abertura de chamados de manutencao.\n\n**Como comecar**\n\n1. Crie o administrador e suba a API:\n   - `dotnet run --project src/ChamadosManutencao.Api -- criar-admin`\n   - `dotnet run --project src/ChamadosManutencao.Api`\n2. Selecione o ambiente **Chamados - local**.\n3. Rode a pasta **Comecar aqui** inteira. Ela monta o cenario do zero.\n4. A partir dai, use as pastas UC01 a UC12 na ordem que quiser.\n\n**Trocar de papel**: rode `Comecar aqui > Entrar como tecnico` (ou cliente, ou administrador). O token fica na variavel token e vale para toda a collection.\n\nO administrador vem do comando criar-admin; o tecnico e o cliente sao criados pela pasta Comecar aqui, com senha `Senha@123`.\n\n**Encadeamento**: toda requisicao que cria alguma coisa guarda o identificador em variavel de collection (chamadoId, atendimentoId, faturaId...). Seguindo a ordem das pastas, uma alimenta a outra.\n\n**Filtros**: os parametros de query vem desabilitados. Marque a caixa dos que quiser usar.\n\n**Upload**: nas requisicoes multipart, selecione um arquivo no campo antes de enviar.\n\nGuia de operacao completo no README do repositorio.",
+    "description": "Interface de operacao do sistema de abertura de chamados de manutencao.\n\n**Como comecar**\n\n1. Crie o administrador e suba a API:\n   - `dotnet run --project src/ChamadosManutencao.Api -- criar-admin`\n   - `dotnet run --project src/ChamadosManutencao.Api`\n2. Selecione o ambiente **Chamados - local**.\n3. Rode a pasta **Comecar aqui** inteira. Ela monta o cenario do zero.\n4. A partir dai, use as pastas UC01 a UC12 na ordem que quiser.\n\n**Trocar de papel**: rode `Comecar aqui > Entrar como tecnico` (ou cliente, ou administrador). O token fica na variavel token e vale para toda a collection.\n\nO administrador vem do comando criar-admin; o tecnico e o cliente sao criados pela pasta Comecar aqui, com a senha da variavel senha (`Senha@123`). O administrador entra com senhaAdministrador, que precisa bater com ADMIN_INICIAL_SENHA do .env.\n\n**Encadeamento**: toda requisicao que cria alguma coisa guarda o identificador em variavel de collection (chamadoId, atendimentoId, faturaId...). Seguindo a ordem das pastas, uma alimenta a outra.\n\n**Filtros**: os parametros de query vem desabilitados. Marque a caixa dos que quiser usar.\n\n**Upload**: nas requisicoes multipart, selecione um arquivo no campo antes de enviar.\n\nGuia de operacao completo no README do repositorio.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -176,7 +176,7 @@
   "item": [
     {
       "name": "Comecar aqui",
-      "description": "Rode esta pasta inteira uma vez, de cima para baixo. Ela monta o cenario do zero e guarda os identificadores nas variaveis da collection: a partir daqui as outras pastas funcionam sem voce copiar GUID nenhum.\n\nPre-requisito: o administrador precisa existir. Ele nasce por linha de comando, que e o unico caminho previsto:\n\n    dotnet run --project src/ChamadosManutencao.Api -- criar-admin\n\nUse no ambiente o mesmo e-mail e a mesma senha que voce passou nas variaveis ADMIN_INICIAL_*.\n\nPara trocar de papel depois, rode so o login correspondente.",
+      "description": "Rode esta pasta inteira uma vez, de cima para baixo. Ela monta o cenario do zero e guarda os identificadores nas variaveis da collection: a partir daqui as outras pastas funcionam sem voce copiar GUID nenhum.\n\nPre-requisito: o administrador precisa existir. Ele nasce por linha de comando, que e o unico caminho previsto:\n\n    dotnet run --project src/ChamadosManutencao.Api -- criar-admin\n\nAs variaveis emailAdministrador e senhaAdministrador do ambiente precisam repetir ADMIN_INICIAL_EMAIL e ADMIN_INICIAL_SENHA do .env. Ja vem com os valores do .env.example.\n\nPara trocar de papel depois, rode so o login correspondente.",
       "item": [
         {
           "name": "Entrar como administrador",
@@ -203,7 +203,7 @@
             "description": "Autentica com o e-mail da variavel emailAdministrador e guarda o token.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senhaAdministrador}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -628,7 +628,7 @@
             "description": "Autentica com o e-mail da variavel emailAdministrador e guarda o token.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senhaAdministrador}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -713,7 +713,7 @@
             "description": "Autentica o usuario e devolve o token JWT.\nRequisitos: RNF0022.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senhaAdministrador}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4736,7 +4736,7 @@
             "description": "Autentica com o e-mail da variavel emailAdministrador e guarda o token.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senhaAdministrador}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -5160,7 +5160,7 @@
             "description": "Autentica com o e-mail da variavel emailAdministrador e guarda o token.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senhaAdministrador}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -6176,7 +6176,7 @@
             "description": "Autentica com o e-mail da variavel emailAdministrador e guarda o token.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senhaAdministrador}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -6423,7 +6423,7 @@
             "description": "Autentica com o e-mail da variavel emailAdministrador e guarda o token.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senha}}\"\n}",
+              "raw": "{\n  \"email\": \"{{emailAdministrador}}\",\n  \"senha\": \"{{senhaAdministrador}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

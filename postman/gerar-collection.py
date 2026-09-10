@@ -102,7 +102,7 @@ EXEMPLO_POR_NOME = {
 }
 
 CORPO_MANUAL = {
-    ("post", "/api/v1/auth/login"): {"email": "{{emailAdministrador}}", "senha": "{{senha}}"},
+    ("post", "/api/v1/auth/login"): {"email": "{{emailAdministrador}}", "senha": "{{senhaAdministrador}}"},
     ("post", "/api/v1/clientes"): {
         "nomeCompleto": "Cliente Novo",
         "cpf": "{{novoCpf}}",
@@ -602,10 +602,14 @@ def requisicao_avulsa(metodo, caminho, nome, descricao="", corpo=None, query=Non
 
 
 def login(papel, variavel_email):
+    # O administrador nasce do criar-admin, com a senha de ADMIN_INICIAL_SENHA; o tecnico e o
+    # cliente nascem da propria collection, com a senha da variavel senha.
+    variavel_senha = "senhaAdministrador" if variavel_email == "emailAdministrador" else "senha"
+
     return requisicao_avulsa(
         "POST", "/api/v1/auth/login", "Entrar como " + papel,
         descricao="Autentica com o e-mail da variavel " + variavel_email + " e guarda o token.",
-        corpo={"email": "{{" + variavel_email + "}}", "senha": "{{senha}}"},
+        corpo={"email": "{{" + variavel_email + "}}", "senha": "{{" + variavel_senha + "}}"},
         sem_auth=True,
         script=CAPTURA[("post", "/api/v1/auth/login")],
     )
@@ -620,8 +624,9 @@ PASTA_INICIAL = {
         + "Pre-requisito: o administrador precisa existir. Ele nasce por linha de comando, que e "
         + "o unico caminho previsto:" + NL + NL
         + "    dotnet run --project src/ChamadosManutencao.Api -- criar-admin" + NL + NL
-        + "Use no ambiente o mesmo e-mail e a mesma senha que voce passou nas variaveis "
-        + "ADMIN_INICIAL_*." + NL + NL
+        + "As variaveis emailAdministrador e senhaAdministrador do ambiente precisam repetir "
+        + "ADMIN_INICIAL_EMAIL e ADMIN_INICIAL_SENHA do .env. Ja vem com os valores do "
+        + ".env.example." + NL + NL
         + "Para trocar de papel depois, rode so o login correspondente."
     ),
     "item": [
@@ -923,7 +928,8 @@ DESCRICAO = (
     + "**Trocar de papel**: rode `Comecar aqui > Entrar como tecnico` (ou cliente, ou "
     + "administrador). O token fica na variavel token e vale para toda a collection." + NL + NL
     + "O administrador vem do comando criar-admin; o tecnico e o cliente sao criados pela "
-    + "pasta Comecar aqui, com senha `Senha@123`." + NL + NL
+    + "pasta Comecar aqui, com a senha da variavel senha (`Senha@123`). O administrador entra "
+    + "com senhaAdministrador, que precisa bater com ADMIN_INICIAL_SENHA do .env." + NL + NL
     + "**Encadeamento**: toda requisicao que cria alguma coisa guarda o identificador em variavel "
     + "de collection (chamadoId, atendimentoId, faturaId...). Seguindo a ordem das pastas, uma "
     + "alimenta a outra." + NL + NL
@@ -978,6 +984,7 @@ ambiente = {
     "values": [
         {"key": "baseUrl", "value": "http://localhost:5080", "enabled": True, "type": "default"},
         {"key": "emailAdministrador", "value": "admin@chamados.local", "enabled": True, "type": "default"},
+        {"key": "senhaAdministrador", "value": "Admin@2026", "enabled": True, "type": "default"},
         {"key": "emailTecnico", "value": "", "enabled": True, "type": "default"},
         {"key": "emailCliente", "value": "", "enabled": True, "type": "default"},
         {"key": "senha", "value": "Senha@123", "enabled": True, "type": "default"},

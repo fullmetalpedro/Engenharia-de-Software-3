@@ -22,8 +22,13 @@ identificadores passando de uma chamada para a outra.
    dotnet run --project src/ChamadosManutencao.Api
    ```
 
-   No ambiente do Postman, use em `emailAdministrador` e `senha` os mesmos valores que você
-   passou em `ADMIN_INICIAL_EMAIL` e `ADMIN_INICIAL_SENHA`.
+   No ambiente do Postman, `emailAdministrador` e `senhaAdministrador` precisam repetir o que
+   você passou em `ADMIN_INICIAL_EMAIL` e `ADMIN_INICIAL_SENHA`. Já vêm preenchidos com os
+   valores do `.env.example`; se você trocou a senha do administrador no seu `.env`, troque
+   aqui também.
+
+   A variável `senha`, separada, é a senha do técnico e do cliente que a collection cria — não
+   tem relação com a do administrador.
 
 2. No Postman: **Import** → arraste os dois arquivos `.json`.
 
